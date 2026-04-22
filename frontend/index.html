@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>{{og_title}}</title>
+    <meta name="description" content="{{og_description}}">
+    <!-- Open Graph -->
+    <meta property="og:title" content="{{og_title}}">
+    <meta property="og:description" content="{{og_description}}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{og_url}}">
+    <meta property="og:image" content="{{og_image}}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{og_title}}">
+    <meta name="twitter:description" content="{{og_description}}">
+    <meta name="twitter:image" content="{{og_image}}">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23d32f2f' d='M1 2h14v3H1z'/%3E%3Cpath fill='%23fff' d='M1 5h14v3H1z'/%3E%3Cpath fill='%231e3a8a' d='M1 8h14v3H1z'/%3E%3Cpath fill='%23fff' d='M1 11h14v3H1z'/%3E%3C/svg%3E">
+</head>
+<body>
+    <div id="stage">
+        <canvas id="game"></canvas>
+        <div id="loading">LOADING…</div>
+        <div id="submit-overlay" aria-hidden="true">
+            <form class="card" id="submit-form">
+                <h2 id="submit-title">ENTER NAME</h2>
+                <p id="submit-sub" style="margin:0 0 8px;font-size:12px;opacity:.8">
+                    Your run will be saved to the board.
+                </p>
+                <input name="name" maxlength="16" autocomplete="off" spellcheck="false" placeholder="AAA" required>
+                <div class="row">
+                    <button type="submit">Submit</button>
+                    <button type="button" class="ghost" id="submit-skip">Skip</button>
+                </div>
+            </form>
+        </div>
+        <div id="share-overlay" aria-hidden="true">
+            <div class="card">
+                <h2>SHARE YOUR SCORE</h2>
+                <p id="share-preview-text" class="preview"></p>
+                <div class="row share-buttons">
+                    <a id="share-twitter" target="_blank" rel="noopener" class="btn-twitter" title="Share on X">POST ON X</a>
+                    <a id="share-facebook" target="_blank" rel="noopener" class="btn-fb" title="Share on Facebook">FB</a>
+                    <a id="share-reddit" target="_blank" rel="noopener" class="btn-reddit" title="Share on Reddit">REDDIT</a>
+                </div>
+                <div class="row" style="margin-top:8px">
+                    <input id="share-link" readonly value="" aria-label="Share link">
+                    <button type="button" id="share-copy">COPY LINK</button>
+                </div>
+                <div class="row" style="margin-top:10px">
+                    <button type="button" class="ghost" id="share-close">CLOSE</button>
+                </div>
+                <p style="margin:10px 0 0;font-size:10px;opacity:.6">Friends who beat your score will know they've earned it.</p>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <span>B.A.M. — an 8-bit parable. All characters fictional.</span>
+    </footer>
+    <script type="module" src="/js/main.js"></script>
+</body>
+</html>

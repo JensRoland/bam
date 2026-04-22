@@ -1448,57 +1448,59 @@ function splashScene() {
     k.add([k.rect(k.width(), 12), k.pos(0, 36), k.color(255, 255, 255), k.fixed()]);
     k.add([k.rect(k.width(), 12), k.pos(0, 60), k.color(42, 79, 184), k.fixed()]);
 
-    // Title — viewport is 512×288, so keep a readable but not-overwhelming size
+    // Title block — centered above the two-column body.
     k.add([
-        k.text('B.A.M.', { size: 48 }),
-        k.pos(k.width() / 2, 100),
+        k.text('B.A.M.', { size: 40 }),
+        k.pos(k.width() / 2, 92),
         k.anchor('center'),
         k.color(255, 255, 255),
     ]);
     k.add([
-        k.text('BRAVE AMERICA MAN', { size: 14 }),
-        k.pos(k.width() / 2, 130),
+        k.text('BRAVE AMERICA MAN', { size: 12 }),
+        k.pos(k.width() / 2, 118),
         k.anchor('center'),
         k.color(220, 220, 220),
     ]);
 
-    // Player sprite on the left (sprite is now 2× native, no extra k.scale needed)
-    k.add([k.sprite('playerIdle'), k.pos(90, 150), k.anchor('top')]);
-
-    // Opening quote — to the right of the player sprite.
+    // --- Left column: player + opening quote -------------------------------
+    k.add([k.sprite('playerIdle'), k.pos(50, 140), k.anchor('top')]);
     const lines = [
-        '"Your pickup truck broke down',
-        'in a strange place. Something',
-        'ain\'t right around here....',
-        'Lock \'n\' load, soldier!"',
+        '"Your pickup truck',
+        'broke down in a',
+        'strange place.',
+        'Something ain\'t',
+        'right around here.',
+        'Lock \'n\' load,',
+        'soldier!"',
     ];
     lines.forEach((ln, i) => {
         k.add([
-            k.text(ln, { size: 10 }),
-            k.pos(160, 150 + i * 12),
+            k.text(ln, { size: 9 }),
+            k.pos(96, 142 + i * 11),
             k.anchor('topleft'),
             k.color(200, 200, 200),
         ]);
     });
 
-    // Controls
+    // --- Right column: controls --------------------------------------------
+    const ctrlCenterX = 360;
     k.add([
         k.text('CONTROLS', { size: 14 }),
-        k.pos(k.width() / 2, 212),
-        k.anchor('center'),
+        k.pos(ctrlCenterX, 140),
+        k.anchor('top'),
         k.color(230, 160, 40),
     ]);
     const controls = [
-        ['← →',         'MOVE'],
-        ['↑ / SPACE',   'JUMP'],
-        ['↓',           'GRAB / INTERACT'],
-        ['X',           'USE WEAPON'],
-        ['C',           'CYCLE WEAPON'],
+        ['← →',       'MOVE'],
+        ['↑ / SPACE', 'JUMP'],
+        ['↓',         'GRAB / INTERACT'],
+        ['X',         'USE WEAPON'],
+        ['C',         'CYCLE WEAPON'],
     ];
     controls.forEach(([key, action], i) => {
-        const y = 230 + i * 10;
-        k.add([k.text(key,    { size: 9 }), k.pos(k.width() / 2 - 10, y), k.anchor('topright'), k.color(240, 200, 80)]);
-        k.add([k.text(action, { size: 9 }), k.pos(k.width() / 2 + 10, y), k.anchor('topleft'),  k.color(200, 200, 200)]);
+        const y = 162 + i * 13;
+        k.add([k.text(key,    { size: 10 }), k.pos(ctrlCenterX - 6,  y), k.anchor('topright'), k.color(240, 200, 80)]);
+        k.add([k.text(action, { size: 10 }), k.pos(ctrlCenterX + 6,  y), k.anchor('topleft'),  k.color(200, 200, 200)]);
     });
 
     // Challenge banner — when the user arrived via a share link.

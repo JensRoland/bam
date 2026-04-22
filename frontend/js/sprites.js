@@ -433,15 +433,24 @@ function paintPerson(ctx, frame, opts) {
 
     // --- Hair / hat --------------------------------------------------------
     if (hat) {
+        // Crown of the hat (rows 0-1)
         r(4, 0, 8, 2, hat.color);
+        // Hat-band shadow (row 2)
         r(4, 2, 8, 1, hat.shadow);
+        // Brim extending out to the sides (row 1 edges) and sitting flush on
+        // the head at row 3 so the hat doesn't float above the hairline.
         r(3, 1, 10, 1, hat.color);
-        // hat brim highlight and little chin strap
-        r(3, 1, 10, 0.5, hat.shadow);
+        r(3, 3, 10, 1, hat.shadow);
+        // Crown highlight strip
         r(4, 0, 8, 0.5, hat.color === C.ink ? C.grayD : hat.shadow);
-        // badge dot center-front
+        // Band lowlight
+        r(3, 1, 10, 0.5, hat.shadow);
+        // Badge dot centre-front
         r(7.5, 0.5, 1, 1, C.sun);
         r(7.5, 0.5, 1, 0.5, C.sunD);
+        // A wisp of hair peeking out under the brim
+        r(4, 3.5, 1, 0.5, hair);
+        r(11, 3.5, 1, 0.5, hair);
     } else {
         r(4, 0, 8, 3, hair);
         r(4, 3, 8, 1, C.ink);
@@ -892,40 +901,102 @@ function paintHouse(ctx, doorBroken = false) {
 
 function paintChurch(ctx) {
     const r = R(ctx);
-    // Main building
-    r(6, 28, 76, 28, C.stone);
-    for (let y = 32; y < 56; y += 4) r(6, y, 76, 1, C.stoneD);
-    // Steeple base
-    r(36, 12, 16, 16, C.stone);
-    r(36, 12, 16, 1, C.stoneD);
-    // Steeple point
-    r(38, 4, 12, 8, C.purple);
-    r(38, 4, 12, 1, C.purpleD);
-    r(42, 0, 4, 4, C.purple);
-    // Cross
+    // Classic New-England white-clapboard church. Native 88×60.
+    // Main clapboard wall
+    r(6, 28, 76, 28, C.white);
+    r(6, 28, 76, 1, C.whiteD);        // top shadow under the eave
+    r(6, 55, 76, 1, C.ink);           // baseline
+    r(6, 28, 1, 28, C.whiteD);        // left side shadow
+    r(81, 28, 1, 28, C.grayD);        // right side shadow
+    // Horizontal clapboard siding lines
+    for (let y = 32; y < 55; y += 3) r(6, y, 76, 0.5, C.whiteD);
+    // Pitched roof sweeping down to the eaves
+    r(6, 26, 76, 2, C.redD);
+    r(6, 26, 76, 0.5, C.red);         // roof highlight ridge
+    r(4, 27, 80, 1, C.ink);           // eave overhang shadow
+    // Steeple base (square tower flush with the roof)
+    r(36, 12, 16, 16, C.white);
+    r(36, 12, 16, 1, C.whiteD);
+    r(36, 27, 16, 1, C.ink);
+    r(36, 12, 1, 16, C.whiteD);
+    r(51, 12, 1, 16, C.grayD);
+    for (let y = 16; y < 27; y += 3) r(36, y, 16, 0.5, C.whiteD);
+    // Belfry arch (where the bell lives)
+    r(40, 18, 8, 6, C.ink);
+    r(41, 18, 6, 1, C.ink);
+    r(42, 20, 4, 3, C.brass);         // bell
+    r(42, 20, 4, 0.5, C.sun);         // bell sheen
+    r(43, 19, 2, 1, C.gunD);          // bell yoke
+    // Spire — sloped white with a dark ridge line
+    r(38, 4, 12, 8, C.white);
+    r(38, 4, 12, 1, C.whiteD);
+    r(43, 4, 1, 8, C.whiteD);         // centre ridge shadow
+    r(38, 11, 12, 1, C.grayD);
+    // Tapered spire tip
+    r(40, 2, 8, 2, C.white);
+    r(42, 0, 4, 2, C.white);
+    r(43, 0, 2, 2, C.whiteD);
+    // Gold cross on top
     r(43, -6, 2, 8, C.brass);
+    r(43, -6, 2, 0.5, C.sun);
     r(40, -3, 8, 2, C.brass);
-    // Stained glass (round window on steeple)
-    r(40, 16, 8, 8, C.redL);
-    r(41, 17, 6, 6, C.blue);
-    r(42, 18, 4, 4, C.white);
-    // Arched doorway
-    r(40, 38, 8, 18, C.woodD);
-    r(41, 36, 6, 2, C.woodD);
-    r(42, 35, 4, 1, C.woodD);
-    r(41, 40, 6, 14, C.wood);
-    r(44, 40, 1, 14, C.woodD);
-    // Windows along the sides
+    r(40, -3, 8, 0.5, C.sun);
+    // Round stained-glass window above the door
+    r(40, 32, 8, 8, C.stoneD);        // frame ring
+    r(41, 32, 6, 8, C.ink);
+    r(41, 33, 6, 6, C.blueL);
+    r(42, 34, 4, 4, C.sun);           // amber centre
+    r(43, 35, 2, 2, C.white);
+    r(41, 35.5, 6, 0.5, C.ink);       // horizontal mullion
+    r(43.5, 33, 0.5, 6, C.ink);       // vertical mullion
+    // Front steps
+    r(34, 54, 20, 2, C.stone);
+    r(34, 54, 20, 0.5, C.whiteD);
+    // Arched wooden double doors
+    r(40, 40, 8, 16, C.wood);
+    r(40, 40, 8, 1, C.woodD);
+    r(40, 40, 1, 16, C.woodD);
+    r(47, 40, 1, 16, C.woodD);
+    r(43.5, 40, 1, 16, C.woodD);      // centre join
+    r(41, 38, 6, 2, C.wood);          // arch top
+    r(42, 37, 4, 1, C.wood);
+    r(41, 38, 6, 0.5, C.woodD);
+    // Door panels + brass handles
+    r(41, 44, 2, 4, C.woodD);
+    r(45, 44, 2, 4, C.woodD);
+    r(43, 47, 0.5, 0.5, C.brass);
+    r(44, 47, 0.5, 0.5, C.brass);
+    // Side windows — taller lancet shape
     for (const wx of [14, 66]) {
-        r(wx, 36, 6, 12, C.blueL);
-        r(wx, 36, 6, 1, C.ink);
-        r(wx, 47, 6, 1, C.ink);
-        r(wx, 36, 1, 12, C.ink);
-        r(wx + 5, 36, 1, 12, C.ink);
-        r(wx + 2, 36, 2, 12, C.brass);
+        // frame surround
+        r(wx - 1, 33, 8, 16, C.stoneD);
+        // glass
+        r(wx, 34, 6, 14, C.blueL);
+        r(wx, 34, 6, 2, C.blue);      // upper stained glass
+        r(wx + 1, 35, 4, 1, C.sun);   // amber pane
+        // cross mullions
+        r(wx, 34, 6, 0.5, C.ink);
+        r(wx, 47.5, 6, 0.5, C.ink);
+        r(wx + 2.5, 34, 0.5, 14, C.ink);
+        r(wx, 40, 6, 0.5, C.ink);
+        // arched top detail
+        r(wx + 2, 33, 2, 1, C.stoneD);
+        // sill
+        r(wx - 1, 48, 8, 1, C.stone);
     }
-    // Ground
-    r(0, 56, 88, 4, C.grassD);
+    // Small decorative quatrefoil vents under the eaves
+    r(20, 30, 2, 2, C.ink);
+    r(66, 30, 2, 2, C.ink);
+    r(20.5, 30.5, 1, 1, C.brass);
+    r(66.5, 30.5, 1, 1, C.brass);
+    // Neat lawn
+    r(0, 56, 88, 4, C.grass);
+    r(0, 56, 88, 1, C.leaf);
+    // Little shrubs flanking the steps
+    r(28, 54, 4, 3, C.leaf);
+    r(28, 54, 4, 0.5, C.grass);
+    r(56, 54, 4, 3, C.leaf);
+    r(56, 54, 4, 0.5, C.grass);
 }
 
 // ---------- CHURCH (insane — portal to hell) --------------------------------
@@ -1073,16 +1144,44 @@ function paintAmmo(ctx) {
 
 function paintCap(ctx) {
     const r = R(ctx);
-    r(2, 1, 8, 2, C.red);
-    r(1, 2, 10, 2, C.red);
-    r(1, 3, 10, 1, C.redD);
-    r(11, 3, 3, 1, C.red);      // visor
-    r(11, 4, 3, 1, C.redD);
-    r(3, 1, 6, 1, C.redL);      // highlight
-    // tiny white stitching "U"
-    r(5, 2, 1, 1, C.white);
-    r(6, 2, 1, 1, C.white);
-    r(7, 2, 1, 1, C.white);
+    // Baseball cap — 6-panel crown with a visor sticking out to the right.
+    // Native 14×6; fractional coords shape the curve so it reads as a dome
+    // rather than a flat slab.
+    // Rounded top of the crown (narrower than the base)
+    r(3, 0, 6, 1, C.redD);           // dark rim of the very top
+    r(3.5, 0, 5, 0.5, C.red);        // top highlight row
+    r(4, 0, 4, 0.5, C.redL);         // sheen on the crown peak
+    // Main crown body — wider and brightest in the middle
+    r(2, 1, 8, 1, C.red);
+    r(2, 1, 8, 0.5, C.redL);         // front-facing highlight band
+    r(2, 1.5, 1, 0.5, C.redD);       // left shadow
+    r(9, 1.5, 1, 0.5, C.redD);       // right shadow
+    r(1.5, 2, 9, 1, C.red);          // lower crown (bulges out a bit)
+    r(1.5, 2, 9, 0.5, C.redL);       // sub-highlight
+    r(1.5, 2, 1, 1, C.redD);         // outer-left shade
+    r(9.5, 2, 1, 1, C.redD);         // outer-right shade
+    // Button on top of the crown
+    r(5.5, 0, 1, 0.5, C.redL);
+    r(5.5, 0, 0.5, 0.5, C.sun);
+    // 6-panel seams (two vertical stitch lines on the visible half)
+    r(4.5, 1, 0.5, 2, C.redD);
+    r(7, 1, 0.5, 2, C.redD);
+    // Visor — extends out to the right, with a distinct underside shadow
+    r(10, 2.5, 4, 0.5, C.redD);      // upper rim of the visor
+    r(10, 3, 4, 1, C.red);           // visor top surface
+    r(10, 3, 4, 0.5, C.redL);        // visor sheen
+    r(10, 4, 4, 1, C.redD);          // visor underside (darker)
+    r(13.5, 3, 0.5, 1.5, C.ink);     // tip of the visor
+    // Sweat-band strip along the base of the crown
+    r(1, 3, 9, 1, C.white);
+    r(1, 3, 9, 0.5, C.whiteD);
+    // Front-panel logo "U" in tiny white stitches
+    r(4.5, 1.5, 0.5, 0.5, C.white);
+    r(5, 2, 0.5, 0.5, C.white);
+    r(5.5, 2, 0.5, 0.5, C.white);
+    r(6, 2, 0.5, 0.5, C.white);
+    r(6.5, 2, 0.5, 0.5, C.white);
+    r(7, 1.5, 0.5, 0.5, C.white);
 }
 
 function paintSyringe(ctx) {

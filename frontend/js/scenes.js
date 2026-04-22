@@ -1396,7 +1396,8 @@ function buildPlayingContext(opts) {
         timer.text = `${m}:${String(s).padStart(2, '0')}`;
     });
 
-    const usaFlash = k.add([k.text('', { size: 28 }), k.pos(k.width() / 2, 20), k.anchor('top'), k.fixed(), k.color(255, 255, 255), k.z(101)]);
+    // Centered below the HUD column so it doesn't collide with HP/INTOX/slots.
+    const usaFlash = k.add([k.text('', { size: 22 }), k.pos(k.width() / 2, 130), k.anchor('top'), k.fixed(), k.color(255, 255, 255), k.z(101)]);
     usaFlash.onUpdate(() => {
         if (k.time() < player.invulnUntil) {
             const blink = Math.floor(k.time() * 6) % 2;

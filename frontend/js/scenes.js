@@ -240,7 +240,7 @@ function buildPlayingContext(opts) {
     });
 
     // Jump (one-shot impulse)
-    k.onKeyPress(['space', 'up', 'w'], () => {
+    k.onKeyPress(['up', 'w'], () => {
         if (p.isGrounded() && k.time() >= player.stunUntil) {
             p.vel.y = -WORLD.jumpVel;
         }
@@ -1492,11 +1492,11 @@ function splashScene() {
         k.color(230, 160, 40),
     ]);
     const controls = [
-        ['← →',       'MOVE'],
-        ['↑ / SPACE', 'JUMP'],
-        ['↓',         'GRAB / INTERACT'],
-        ['X',         'USE WEAPON'],
-        ['C',         'CYCLE WEAPON'],
+        ['← →', 'MOVE'],
+        ['↑',   'JUMP'],
+        ['↓',   'GRAB / INTERACT'],
+        ['X',   'USE WEAPON'],
+        ['C',   'CYCLE WEAPON'],
     ];
     controls.forEach(([key, action], i) => {
         const y = 162 + i * 13;

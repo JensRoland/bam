@@ -2214,16 +2214,10 @@ async function endingScene({ stats, player, runTimeMs }) {
 async function scoreboardScene() {
     k.add([k.rect(k.width(), k.height()), k.color(10, 15, 25), k.fixed(), k.z(-100)]);
     k.add([
-        k.text('TOP 50', { size: 32 }),
-        k.pos(k.width() / 2, 22),
+        k.text('SCOREBOARD', { size: 24 }),
+        k.pos(k.width() / 2, 18),
         k.anchor('center'),
         k.color(255, 255, 255),
-    ]);
-    k.add([
-        k.text('wins ranked by fastest time  ·  crimes ranked by sentence', { size: 11 }),
-        k.pos(k.width() / 2, 48),
-        k.anchor('center'),
-        k.color(180, 180, 180),
     ]);
 
     const loading = k.add([
@@ -2242,27 +2236,14 @@ async function scoreboardScene() {
     }
     k.destroy(loading);
 
-    // Column layout for the 512-wide viewport. Kept simple: the data is right-
-    // aligned for numerics so varying digit counts don't rag the column.
-    const headerY = 68;
-    const cols = [
-        { label: '#',     x: 22,  anchor: 'topleft',  align: 'left'  },
-        { label: 'NAME',  x: 48,  anchor: 'topleft',  align: 'left'  },
-        { label: 'TYPE',  x: 200, anchor: 'topleft',  align: 'left'  },
-        { label: 'TIME',  x: 300, anchor: 'topright', align: 'right' },
-        { label: 'KILLS', x: 372, anchor: 'topright', align: 'right' },
-        { label: 'YEARS', x: 468, anchor: 'topright', align: 'right' },
-    ];
-    for (const col of cols) {
-        k.add([
-            k.text(col.label, { size: 11 }),
-            k.pos(col.x, headerY),
-            k.anchor(col.anchor),
-            k.color(160, 160, 160),
-        ]);
-    }
-    // Horizontal rule under header
-    k.add([k.rect(k.width() - 32, 1), k.pos(16, headerY + 14), k.color(70, 76, 92)]);
+    // Split into two lists — winners (peaceful runs, ranked by fastest time)
+    // and the FBI most-wanted (criminal runs, ranked by prison sentence).
+    const winners = scores
+        .filter((s) => s.ending === 'win')
+        .sort((a, b) => a.time_ms - b.time_ms);
+    const wanted = scores
+        .filter((s) => s.ending !== 'win')
+        .sort((a, b) => (b.years || 0) - (a.years || 0));
 
     if (scores.length === 0) {
         k.add([
@@ -2282,42 +2263,121 @@ async function scoreboardScene() {
         return;
     }
 
-    // Paginated rows — top 50 doesn't fit readably on one screen.
-    const rowSize = 11;
-    const rowStep = 12;
+    // Two-column layout on the 512-wide viewport.
+    const GUTTER = 4;
+    const COL_W = (k.width() - GUTTER * 3) / 2;   // ≈ 250
+    const leftX = GUTTER;
+    const rightX = leftX + COL_W + GUTTER;
+    const headerY = 44;
+    const rowSize = 10;
+    const rowStep = 11;
     const rowTop = headerY + 22;
     const rowBottom = k.height() - 28;
     const perPage = Math.floor((rowBottom - rowTop) / rowStep);
-    const totalPages = Math.max(1, Math.ceil(scores.length / perPage));
+
+    // Column headings
+    k.add([
+        k.text('WINNERS', { size: 14 }),
+        k.pos(leftX + COL_W / 2, headerY - 4),
+        k.anchor('top'),
+        k.color(120, 230, 140),
+    ]);
+    k.add([
+        k.text('fastest times', { size: 9 }),
+        k.pos(leftX + COL_W / 2, headerY + 12),
+        k.anchor('top'),
+        k.color(140, 180, 150),
+    ]);
+    k.add([
+        k.text("FBI'S MOST WANTED", { size: 14 }),
+        k.pos(rightX + COL_W / 2, headerY - 4),
+        k.anchor('top'),
+        k.color(255, 120, 120),
+    ]);
+    k.add([
+        k.text('longest sentences', { size: 9 }),
+        k.pos(rightX + COL_W / 2, headerY + 12),
+        k.anchor('top'),
+        k.color(200, 140, 140),
+    ]);
+
+    // Sub-headers + divider lines, per column
+    const drawColumnHead = (x, right) => {
+        k.add([k.text('#',    { size: 9 }), k.pos(x + 4,       rowTop - 10), k.color(160, 160, 160)]);
+        k.add([k.text('NAME', { size: 9 }), k.pos(x + 18,      rowTop - 10), k.color(160, 160, 160)]);
+        k.add([
+            k.text(right, { size: 9 }),
+            k.pos(x + COL_W - 4, rowTop - 10),
+            k.anchor('topright'),
+            k.color(160, 160, 160),
+        ]);
+        k.add([k.rect(COL_W - 4, 1), k.pos(x + 2, rowTop - 2), k.color(70, 76, 92)]);
+    };
+    drawColumnHead(leftX,  'TIME');
+    drawColumnHead(rightX, 'YEARS');
+
+    // Vertical divider between the two columns
+    k.add([
+        k.rect(1, rowBottom - headerY + 16),
+        k.pos(leftX + COL_W + GUTTER / 2, headerY - 4),
+        k.color(50, 58, 72),
+    ]);
+
+    // Paginate both lists in lock-step so ← → scrolls them together.
+    const totalPages = Math.max(
+        1,
+        Math.ceil(winners.length / perPage),
+        Math.ceil(wanted.length  / perPage),
+    );
     let page = 0;
     let rowEntities = [];
 
+    const renderColumn = (list, x, rgb, rightField) => {
+        const start = page * perPage;
+        list.slice(start, start + perPage).forEach((s, i) => {
+            const rank = start + i + 1;
+            const y = rowTop + i * rowStep;
+            rowEntities.push(k.add([
+                k.text(`${rank}`, { size: rowSize }),
+                k.pos(x + 4, y),
+                k.color(...rgb),
+            ]));
+            rowEntities.push(k.add([
+                k.text(s.name.slice(0, 16), { size: rowSize }),
+                k.pos(x + 18, y),
+                k.color(...rgb),
+            ]));
+            rowEntities.push(k.add([
+                k.text(rightField(s), { size: rowSize }),
+                k.pos(x + COL_W - 4, y),
+                k.anchor('topright'),
+                k.color(...rgb),
+            ]));
+        });
+    };
     const renderPage = () => {
         rowEntities.forEach((e) => k.destroy(e));
         rowEntities = [];
-        const start = page * perPage;
-        const slice = scores.slice(start, start + perPage);
-        slice.forEach((s, i) => {
-            const rank = start + i + 1;
-            const y = rowTop + i * rowStep;
-            const rgb = s.ending === 'win' ? [120, 230, 140] : [255, 120, 120];
-            const fields = [
-                { x: cols[0].x, anchor: 'topleft',  text: `${rank}`               },
-                { x: cols[1].x, anchor: 'topleft',  text: s.name.slice(0, 14)     },
-                { x: cols[2].x, anchor: 'topleft',  text: s.ending                },
-                { x: cols[3].x, anchor: 'topright', text: formatMs(s.time_ms)     },
-                { x: cols[4].x, anchor: 'topright', text: `${s.kills}`            },
-                { x: cols[5].x, anchor: 'topright', text: `${s.years}`            },
-            ];
-            for (const f of fields) {
-                rowEntities.push(k.add([
-                    k.text(f.text, { size: rowSize }),
-                    k.pos(f.x, y),
-                    k.anchor(f.anchor),
-                    k.color(...rgb),
-                ]));
-            }
-        });
+        renderColumn(winners, leftX,  [120, 230, 140], (s) => formatMs(s.time_ms));
+        renderColumn(wanted,  rightX, [255, 120, 120], (s) => `${s.years || 0}y`);
+        // "empty column" hint if either side has nothing on this page
+        const winStart = page * perPage;
+        if (winStart >= winners.length) {
+            rowEntities.push(k.add([
+                k.text('— no winners yet —', { size: 10 }),
+                k.pos(leftX + COL_W / 2, rowTop + 8),
+                k.anchor('top'),
+                k.color(90, 130, 100),
+            ]));
+        }
+        if (winStart >= wanted.length) {
+            rowEntities.push(k.add([
+                k.text('— nobody wanted —', { size: 10 }),
+                k.pos(rightX + COL_W / 2, rowTop + 8),
+                k.anchor('top'),
+                k.color(130, 90, 90),
+            ]));
+        }
     };
     renderPage();
 

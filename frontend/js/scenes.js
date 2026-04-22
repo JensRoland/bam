@@ -162,6 +162,17 @@ function buildPlayingContext(opts) {
     const invincible = !!opts.invincible;
     const enemyActiveDistance = opts.enemyActiveDistance ?? 600;
 
+    // Fraction of the intoxication/rage bar currently filled (0..1). Used by
+    // both the HUD readout and the run-speed multiplier so they can't drift.
+    const intoxLevel = () => {
+        const drunkLeft = Math.max(0, player.intoxicatedUntil - k.time());
+        const highLeft  = Math.max(0, player.rageUntil - k.time());
+        return Math.max(
+            Math.min(1, drunkLeft / 20),
+            highLeft > 0 ? Math.min(1, highLeft / 25) : 0,
+        );
+    };
+
     // ----- Player entity ----------------------------------------------------
     const p = k.add([
         k.sprite('playerIdle'),
@@ -200,9 +211,12 @@ function buildPlayingContext(opts) {
             const grounded = p.isGrounded();
             const accel = grounded ? WORLD.accelGround : WORLD.accelAir;
             const decel = grounded ? WORLD.friction : WORLD.friction * 0.35;
+            // Running faster while drunk / raging — scales linearly with the
+            // intox bar up to 1.5× at full energy.
+            const spd = WORLD.playerSpeed * (1 + 0.5 * intoxLevel());
             let targetVx = 0;
-            if (leftHeld)  { targetVx -= WORLD.playerSpeed; player.facing = -1; }
-            if (rightHeld) { targetVx += WORLD.playerSpeed; player.facing =  1; }
+            if (leftHeld)  { targetVx -= spd; player.facing = -1; }
+            if (rightHeld) { targetVx += spd; player.facing =  1; }
             const dt = k.dt();
             if (targetVx === 0) {
                 if (p.vel.x > 0)      p.vel.x = Math.max(0, p.vel.x - decel * dt);
@@ -1234,14 +1248,10 @@ function buildPlayingContext(opts) {
     k.add([k.rect(164, 16), k.pos(12, 36), k.color(20, 20, 20), k.fixed(), k.z(100)]);
     const intoxFill = k.add([k.rect(160, 12), k.pos(14, 38), k.color(230, 120, 20), k.fixed(), k.z(101)]);
     intoxFill.onUpdate(() => {
-        const drunkLeft = Math.max(0, player.intoxicatedUntil - k.time());
-        const highLeft  = Math.max(0, player.rageUntil - k.time());
-        const level = Math.max(
-            Math.min(1, drunkLeft / 20),
-            highLeft > 0 ? Math.min(1, highLeft / 25) : 0,
-        );
-        intoxFill.width = 160 * level;
-        intoxFill.color = highLeft > 0 ? k.rgb(160, 60, 220) : k.rgb(230, 120, 20);
+        intoxFill.width = 160 * intoxLevel();
+        intoxFill.color = k.time() < player.rageUntil
+            ? k.rgb(160, 60, 220)
+            : k.rgb(230, 120, 20);
     });
     const intoxLabel = k.add([k.text('INTOX', { size: 20 }), k.pos(184, 36), k.fixed(), k.color(255, 255, 255), k.z(101)]);
     intoxLabel.onUpdate(() => {

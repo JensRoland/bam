@@ -82,6 +82,16 @@ export const C = {
 };
 
 /**
+ * Global sprite upscale. Every painter works in its original native-pixel
+ * coord space; `sprite()` and `R()` together multiply the output canvas and
+ * every drawing call by `S` so each sprite is rendered at S× the native
+ * resolution. Painters can paint finer-than-native detail by passing
+ * fractional coords (e.g. `r(4.5, 5, 1, 1, c)` lands a 1-screen-pixel stroke
+ * at an odd offset, impossible at 1×).
+ */
+export const S = 2;
+
+/**
  * Create an offscreen canvas, let the painter draw into it, and return both.
  * The canvas's toDataURL() is what we feed the engine.
  * @param {number} w
@@ -90,21 +100,28 @@ export const C = {
  */
 function sprite(w, h, paint) {
     const c = document.createElement('canvas');
-    c.width = w;
-    c.height = h;
+    c.width = w * S;
+    c.height = h * S;
     const ctx = /** @type {CanvasRenderingContext2D} */ (c.getContext('2d'));
     ctx.imageSmoothingEnabled = false;
     paint(ctx);
-    return { w, h, url: c.toDataURL() };
+    return { w: w * S, h: h * S, url: c.toDataURL() };
 }
 
 // Tiny rect helper, scoped per painter via closure for terseness.
-const R = (ctx) => (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
+// Multiplies every coord/dim by S so painter code stays at native resolution.
+const R = (ctx) => (x, y, w, h, c) => {
+    ctx.fillStyle = c;
+    ctx.fillRect(x * S, y * S, w * S, h * S);
+};
 
 // ---------- PLAYER ---------------------------------------------------------
 
 /**
  * Muscled man in white tank + jeans + backwards red cap.
+ * Drawn at native 16×24 but every `r()` call spans S×S output pixels (S=2),
+ * so fractional coords (0.5 steps) land single-screen-pixel details —
+ * eye highlights, jaw stubble, stitching, boot-lace eyelets.
  * @param {CanvasRenderingContext2D} ctx
  * @param {'idle'|'walk1'|'walk2'|'jump'|'hit'} frame
  * @param {{hasCap?: boolean, raging?: boolean}} [opts]
@@ -114,105 +131,186 @@ function paintPlayer(ctx, frame, opts = {}) {
     const skin = opts.raging ? C.redL : C.skin;
     const skinS = opts.raging ? C.red : C.skinS;
 
-    // Cap (backwards — visor points right)
+    // --- Cap (backwards — visor points right) -------------------------------
     if (opts.hasCap !== false) {
         r(4, 0, 9, 1, C.redD);
-        r(3, 1, 11, 1, C.red);
-        r(3, 2, 11, 1, C.red);
+        r(3, 1, 11, 2, C.red);
         r(3, 3, 11, 1, C.redD);
-        // visor sticks out right
+        // rim highlight (single screen-pixel stroke)
+        r(3.5, 1, 10, 0.5, C.redL);
+        // stitching dots along the seam
+        r(5, 2.5, 0.5, 0.5, C.white);
+        r(8, 2.5, 0.5, 0.5, C.white);
+        r(11, 2.5, 0.5, 0.5, C.white);
+        // visor sticks out right with undershadow
         r(14, 2, 2, 2, C.red);
         r(14, 4, 2, 1, C.redD);
+        r(14, 2, 2, 0.5, C.redL);
+        // wisp of hair under the cap
+        r(3, 3.5, 1, 0.5, C.hair);
     } else {
-        // bare head — dark hair
+        // bare head — dark hair with a few highlight strands
         r(4, 0, 9, 1, C.hair);
         r(3, 1, 11, 3, C.hair);
+        r(5, 1, 1, 0.5, C.hairH);
+        r(9, 1.5, 2, 0.5, C.hairH);
     }
 
-    // Head
+    // --- Head ---------------------------------------------------------------
     r(4, 4, 9, 1, C.ink);              // hairline shadow
     r(4, 5, 9, 4, skin);               // face
     r(4, 5, 1, 4, skinS);              // left shadow
     r(12, 5, 1, 4, skinS);             // right shadow
-    // eyes
-    r(6, 6, 1, 1, C.white); r(7, 6, 1, 1, C.ink);
-    r(10, 6, 1, 1, C.white); r(11, 6, 1, 1, C.ink);
-    // brow (angry if raging)
+    // cheekbone highlight on the right side
+    r(11.5, 6, 0.5, 2, skin);
+
+    // eyes — sockets (1×1 ink), sclera (0.5 white), pupil (0.5 ink), catchlight
+    r(6, 5.5, 2, 1.5, C.ink);           // eye socket shadow
+    r(10, 5.5, 2, 1.5, C.ink);
+    r(6.5, 6, 1, 1, C.white);           // left sclera
+    r(10.5, 6, 1, 1, C.white);          // right sclera
+    r(7, 6, 0.5, 1, C.ink);             // left pupil
+    r(11, 6, 0.5, 1, C.ink);            // right pupil
+    r(6.5, 6, 0.5, 0.5, C.whiteD);      // catchlights
+    r(10.5, 6, 0.5, 0.5, C.whiteD);
+
+    // brow — always a light ridge; heavy angry v when raging
     if (opts.raging) {
-        r(6, 5, 2, 1, C.ink);
-        r(10, 5, 2, 1, C.ink);
+        r(5.5, 4.5, 2, 0.5, C.ink);
+        r(10.5, 4.5, 2, 0.5, C.ink);
+        r(6, 5, 1, 0.5, C.ink);
+        r(10, 5, 1, 0.5, C.ink);
+    } else {
+        r(6, 5, 2, 0.5, C.hair);
+        r(10, 5, 2, 0.5, C.hair);
     }
-    // nose + mouth
-    r(8, 7, 1, 1, skinS);
+
+    // nose — bridge + nostril shadow
+    r(8, 6.5, 1, 1.5, skinS);
+    r(8, 7.5, 1, 0.5, C.ink);
+    // mouth — dark line with lip highlight and teeth flash
     r(7, 8, 3, 1, C.mouth);
-    // jaw
+    r(7.5, 8, 2, 0.5, C.blood);
+    r(8, 8.5, 1, 0.5, C.white);
+    // jaw + stubble dots
     r(5, 9, 7, 1, skin);
     r(5, 9, 1, 1, skinS);
     r(11, 9, 1, 1, skinS);
-    // neck
+    r(6.5, 9, 0.5, 0.5, skinS);
+    r(8, 9.5, 0.5, 0.5, skinS);
+    r(9.5, 9, 0.5, 0.5, skinS);
+    // neck + adam's apple
     r(7, 10, 3, 1, skinS);
+    r(8, 10, 1, 0.5, skin);
 
-    // Torso — white tank top
+    // --- Torso — white tank top with flag ----------------------------------
     r(3, 11, 11, 1, C.ink);             // shoulder line
     r(3, 12, 11, 6, C.white);
     r(3, 12, 1, 6, C.whiteD);           // left shade
     r(13, 12, 1, 6, C.whiteD);          // right shade
+    // tank-top straps (define neckline)
+    r(5.5, 11.5, 1, 1, C.whiteD);
+    r(10, 11.5, 1, 1, C.whiteD);
+    // chest shading (pecs)
+    r(5, 13, 3, 0.5, C.whiteD);
+    r(9, 13, 3, 0.5, C.whiteD);
+    r(8, 12.5, 1, 4, C.whiteD);         // sternum
     // flag stripes on chest
     r(5, 13, 7, 1, C.red);
     r(5, 15, 7, 1, C.red);
-    // little blue patch (stars)
+    r(5, 13, 7, 0.5, C.redL);
+    r(5, 15, 7, 0.5, C.redL);
+    // little blue patch with stars (3 pixel-dot stars on 2x)
     r(5, 12, 3, 1, C.blue);
-    r(6, 12, 1, 1, C.white);
+    r(5, 12, 3, 0.5, C.blueL);
+    r(5.5, 12.5, 0.5, 0.5, C.white);
+    r(6.5, 12.5, 0.5, 0.5, C.white);
+    r(5.5, 12, 0.5, 0.5, C.white);
 
-    // Arms (muscular — bulges below shoulders)
+    // --- Arms (muscular) ---------------------------------------------------
+    const drawArm = (x, y, flipShade) => {
+        r(x, y, 2, 5, skin);
+        r(flipShade ? x + 1 : x, y, 1, 5, skinS);   // shading stripe
+        r(x, y + 1.5, 2, 0.5, skin);                 // bicep highlight
+        r(x, y + 3, 2, 0.5, skinS);                  // elbow crease
+        r(x, y + 5, 2, 1, C.ink);                    // fist
+        r(x + 0.5, y + 5, 0.5, 0.5, skinS);          // knuckle
+    };
     if (frame === 'walk1') {
-        r(1, 12, 2, 5, skin); r(1, 12, 1, 5, skinS); r(1, 17, 2, 1, C.ink);
-        r(14, 12, 2, 5, skin); r(15, 12, 1, 5, skinS); r(14, 17, 2, 1, C.ink);
+        drawArm(1, 12, false);
+        drawArm(14, 12, true);
     } else if (frame === 'walk2') {
-        r(2, 13, 2, 5, skin); r(2, 13, 1, 5, skinS); r(2, 18, 2, 1, C.ink);
-        r(13, 13, 2, 5, skin); r(14, 13, 1, 5, skinS); r(13, 18, 2, 1, C.ink);
+        drawArm(2, 13, false);
+        drawArm(13, 13, true);
     } else if (frame === 'hit') {
-        r(1, 10, 2, 4, skin); r(14, 14, 2, 4, skin);
+        // punching pose — forward arms extended
+        r(1, 10, 2, 4, skin);
+        r(1, 10, 1, 4, skinS);
+        r(14, 14, 2, 4, skin);
+        r(15, 14, 1, 4, skinS);
+        r(0, 11, 1, 2, skin);
+        r(16, 15, 1, 2, skin);
     } else {
         // idle/jump
-        r(1, 13, 2, 5, skin); r(1, 13, 1, 5, skinS); r(1, 18, 2, 1, C.ink);
-        r(14, 13, 2, 5, skin); r(15, 13, 1, 5, skinS); r(14, 18, 2, 1, C.ink);
+        drawArm(1, 13, false);
+        drawArm(14, 13, true);
     }
 
-    // Belt
+    // --- Belt + buckle ------------------------------------------------------
     r(3, 18, 11, 1, C.ink);
-    r(8, 18, 1, 1, C.brass);            // buckle
+    r(3, 18, 11, 0.5, C.woodD);         // belt top shade
+    r(7.5, 18, 2, 1, C.brass);          // buckle plate
+    r(7.5, 18, 2, 0.5, C.sun);          // buckle highlight
+    r(8, 18.5, 1, 0.5, C.ink);          // star slot
 
-    // Legs (jeans) — with walk cycle
+    // --- Legs (jeans) — walk cycle -----------------------------------------
+    const drawLegs = (lx, rx) => {
+        r(lx, 19, 4, 4, C.denim);
+        r(rx, 19, 4, 4, C.denim);
+        r(lx, 19, 1, 4, C.denimD);      // outer shadow
+        r(rx, 19, 1, 4, C.denimD);
+        r(lx + 3, 19, 0.5, 4, C.denimD); // inner seam
+        r(rx + 3, 19, 0.5, 4, C.denimD);
+        // pocket stitch + fly line
+        r(lx + 1, 20, 1.5, 0.5, C.woodD);
+        r(rx + 1.5, 20, 1.5, 0.5, C.woodD);
+        r((lx + rx) / 2 + 2, 19, 0.5, 2, C.denimD);
+    };
     if (frame === 'walk1') {
-        r(3, 19, 4, 4, C.denim);
-        r(9, 19, 4, 4, C.denim);
-        r(3, 19, 1, 4, C.denimD);
-        r(9, 19, 1, 4, C.denimD);
-        // boots
+        drawLegs(3, 9);
+        // boots with toe cap
         r(2, 23, 5, 1, C.boot);
         r(9, 23, 5, 1, C.boot);
+        r(2, 23, 5, 0.5, C.bootD);
+        r(9, 23, 5, 0.5, C.bootD);
+        r(6, 23.5, 1, 0.5, C.bootD);
+        r(13, 23.5, 1, 0.5, C.bootD);
     } else if (frame === 'walk2') {
-        r(4, 19, 4, 4, C.denim);
-        r(8, 19, 4, 4, C.denim);
-        r(4, 19, 1, 4, C.denimD);
-        r(8, 19, 1, 4, C.denimD);
+        drawLegs(4, 8);
         r(3, 23, 5, 1, C.boot);
         r(8, 23, 5, 1, C.boot);
+        r(3, 23, 5, 0.5, C.bootD);
+        r(8, 23, 5, 0.5, C.bootD);
+        r(7, 23.5, 1, 0.5, C.bootD);
+        r(12, 23.5, 1, 0.5, C.bootD);
     } else if (frame === 'jump') {
+        // tucked legs
         r(3, 19, 4, 3, C.denim);
         r(9, 19, 4, 3, C.denim);
+        r(3, 19, 1, 3, C.denimD);
+        r(9, 19, 1, 3, C.denimD);
         r(3, 22, 4, 1, C.denimD);
         r(9, 22, 4, 1, C.denimD);
         r(2, 22, 5, 1, C.boot);
         r(9, 22, 5, 1, C.boot);
     } else {
-        r(3, 19, 4, 4, C.denim);
-        r(9, 19, 4, 4, C.denim);
-        r(3, 19, 1, 4, C.denimD);
-        r(9, 19, 1, 4, C.denimD);
+        drawLegs(3, 9);
         r(2, 23, 5, 1, C.boot);
         r(9, 23, 5, 1, C.boot);
+        r(2, 23, 5, 0.5, C.bootD);
+        r(9, 23, 5, 0.5, C.bootD);
+        r(6, 23.5, 1, 0.5, C.bootD);
+        r(13, 23.5, 1, 0.5, C.bootD);
     }
 }
 
@@ -220,34 +318,51 @@ function paintPlayer(ctx, frame, opts = {}) {
 
 function paintDog(ctx, frame) {
     const r = R(ctx);
-    // Body
+    // Body with fur direction streaks
     r(4, 5, 11, 4, C.hairH);
     r(4, 5, 11, 1, C.hair);           // back shade
     r(4, 8, 11, 1, C.hair);           // belly shade
+    r(5, 6, 1, 0.5, C.wood);          // fur streak
+    r(8, 5.5, 2, 0.5, C.wood);
+    r(11, 6.5, 1, 0.5, C.wood);
     // Head
     r(0, 4, 5, 4, C.hairH);
     r(0, 4, 5, 1, C.hair);
-    // Ear
+    r(0, 4, 1, 4, C.hair);            // side shadow
+    // Ear (floppy with inner pink)
     r(1, 2, 2, 3, C.hair);
-    // Snout
+    r(1.5, 3, 1, 2, C.blood);         // inner ear
+    // Snout + nose
     r(0, 7, 2, 1, C.hair);
-    r(0, 6, 1, 1, C.ink);
-    // Eye
+    r(0, 6, 1.5, 1, C.ink);           // muzzle top
+    r(0, 6.5, 0.5, 0.5, C.grayD);     // nose highlight
+    // Eye with glint
     r(2, 5, 1, 1, C.ink);
-    // Nose
-    r(0, 6, 1, 1, C.ink);
-    // Tail
+    r(2, 5, 0.5, 0.5, C.white);
+    // Mouth line + tongue hint
+    r(0.5, 7.5, 1.5, 0.5, C.ink);
+    r(1, 7.5, 0.5, 0.5, C.blood);
+    // Collar with tag
+    r(3.5, 8, 1.5, 1, C.red);
+    r(3.5, 8, 1.5, 0.5, C.redD);
+    r(4, 8.5, 0.5, 0.5, C.brass);
+    // Tail (curled, with highlight)
     r(14, 3, 2, 3, C.hair);
     r(15, 2, 1, 2, C.hair);
-    // Legs — walk cycle
+    r(14.5, 3, 0.5, 2, C.hairH);
+    // Legs — walk cycle with paw pads
     if (frame === 'walk1') {
         r(5, 9, 2, 3, C.hair);
         r(12, 9, 2, 3, C.hair);
         r(8, 9, 1, 2, C.hair);
+        r(5, 11.5, 2, 0.5, C.ink);     // front paw
+        r(12, 11.5, 2, 0.5, C.ink);    // back paw
     } else {
         r(4, 9, 2, 3, C.hair);
         r(13, 9, 2, 3, C.hair);
         r(10, 9, 1, 2, C.hair);
+        r(4, 11.5, 2, 0.5, C.ink);
+        r(13, 11.5, 2, 0.5, C.ink);
     }
 }
 
@@ -255,33 +370,49 @@ function paintDog(ctx, frame) {
 
 function paintDogEvil(ctx) {
     const r = R(ctx);
-    // Dark, matted fur — almost black
+    // Dark, matted fur — almost black, with hair clumps
     r(4, 5, 11, 4, C.ink2);
     r(4, 5, 11, 1, C.ink);
     r(4, 8, 11, 1, C.ink);
+    r(5, 6, 1, 0.5, C.ink);            // matted tufts
+    r(8, 5.5, 1, 0.5, C.ink);
+    r(11, 7, 2, 0.5, C.ink);
     // Head
     r(0, 4, 5, 4, C.ink2);
     r(0, 4, 5, 1, C.ink);
+    r(0, 4, 1, 4, C.ink);
     // Spiked ear
     r(1, 1, 2, 4, C.ink);
     r(2, 0, 1, 2, C.ink);
-    // Snout
+    r(2, 1.5, 0.5, 0.5, C.grayD);
+    // Snout with fangs
     r(0, 6, 3, 2, C.ink2);
-    // Fang
-    r(1, 8, 1, 2, C.white);
-    // Glowing red eye
+    r(1, 8, 1, 2, C.white);            // lower fang
+    r(2, 8, 1, 1.5, C.white);          // upper fang
+    r(0, 7, 3, 0.5, C.blood);          // bloody lip line
+    // Glowing red eye with hot core
     r(2, 5, 1, 1, C.red);
-    // Spikes along back
+    r(2, 5, 0.5, 0.5, C.sun);
+    r(2, 4.5, 1, 0.5, C.redD);         // brow ridge
+    // Spikes along back (sharper)
     r(6, 4, 1, 2, C.ink);
+    r(6, 3.5, 0.5, 0.5, C.grayD);
     r(9, 3, 1, 3, C.ink);
+    r(9, 2.5, 0.5, 0.5, C.grayD);
     r(12, 4, 1, 2, C.ink);
-    // Tail (spiked)
+    r(12, 3.5, 0.5, 0.5, C.grayD);
+    // Tail (spiked with drip)
     r(14, 2, 2, 4, C.ink2);
     r(15, 1, 1, 2, C.ink);
-    // Legs
+    r(15, 5.5, 0.5, 0.5, C.red);
+    // Legs with claws
     r(4, 9, 2, 3, C.ink2);
     r(13, 9, 2, 3, C.ink2);
     r(10, 9, 1, 2, C.ink2);
+    r(4, 11.5, 0.5, 0.5, C.white);     // claw
+    r(5.5, 11.5, 0.5, 0.5, C.white);
+    r(13, 11.5, 0.5, 0.5, C.white);
+    r(14.5, 11.5, 0.5, 0.5, C.white);
 }
 
 // ---------- GENERIC CIVILIAN TORSO (reused) --------------------------------
@@ -300,66 +431,118 @@ function paintPerson(ctx, frame, opts) {
         evil = false,  // dark red eyes if 'evil' (drug hallucination)
     } = opts;
 
-    // Hair / hat
+    // --- Hair / hat --------------------------------------------------------
     if (hat) {
         r(4, 0, 8, 2, hat.color);
         r(4, 2, 8, 1, hat.shadow);
         r(3, 1, 10, 1, hat.color);
+        // hat brim highlight and little chin strap
+        r(3, 1, 10, 0.5, hat.shadow);
+        r(4, 0, 8, 0.5, hat.color === C.ink ? C.grayD : hat.shadow);
+        // badge dot center-front
+        r(7.5, 0.5, 1, 1, C.sun);
+        r(7.5, 0.5, 1, 0.5, C.sunD);
     } else {
         r(4, 0, 8, 3, hair);
         r(4, 3, 8, 1, C.ink);
+        // hair highlights + stray locks
+        r(5, 0.5, 1, 0.5, C.hairH);
+        r(9, 1, 2, 0.5, C.hairH);
+        r(4, 2.5, 1, 0.5, C.hairH);
     }
 
-    // Head
+    // --- Head --------------------------------------------------------------
     r(4, 4, 8, 4, skin);
     r(4, 4, 1, 4, skinS);
     r(11, 4, 1, 4, skinS);
-    // eyes
+    r(11, 4, 0.5, 4, C.ink);            // sharper right jaw outline
+    r(10.5, 5, 0.5, 2, skin);           // cheek highlight
+
+    // eyes — slightly larger with catchlight; red glow in evil mode
     if (evil) {
-        r(5, 5, 2, 1, C.red); r(9, 5, 2, 1, C.red);
+        r(5, 5, 2, 1, C.red);
+        r(9, 5, 2, 1, C.red);
+        r(5, 5, 0.5, 0.5, C.redL);
+        r(9, 5, 0.5, 0.5, C.redL);
     } else {
-        r(5, 5, 1, 1, C.ink); r(6, 5, 1, 1, C.white);
-        r(9, 5, 1, 1, C.ink); r(10, 5, 1, 1, C.white);
+        r(5, 4.5, 2, 1.5, C.ink);        // socket
+        r(9, 4.5, 2, 1.5, C.ink);
+        r(5.5, 5, 1, 1, C.white);
+        r(9.5, 5, 1, 1, C.white);
+        r(6, 5, 0.5, 1, C.ink);          // pupil
+        r(10, 5, 0.5, 1, C.ink);
+        r(5.5, 5, 0.5, 0.5, C.whiteD);   // catchlight
+        r(9.5, 5, 0.5, 0.5, C.whiteD);
     }
-    r(7, 6, 1, 1, skinS);               // nose
-    r(6, 7, 3, 1, C.mouth);             // mouth
-    r(6, 8, 4, 1, skinS);               // chin
+    // brow hair (slight, adds age)
+    r(5, 4, 2, 0.5, hair);
+    r(9, 4, 2, 0.5, hair);
+
+    r(7, 6, 1, 1, skinS);                // nose bridge
+    r(7, 6.5, 1, 0.5, C.ink);            // nostril shadow
+    r(6, 7, 3, 1, C.mouth);              // mouth
+    r(6.5, 7, 2, 0.5, C.blood);          // upper lip
+    r(6, 8, 4, 1, skinS);                // chin
+    r(7, 8.5, 2, 0.5, skin);             // chin highlight
     // neck
     r(7, 9, 2, 1, skinS);
+    r(7.5, 9, 1, 0.5, skin);             // throat highlight
 
-    // Torso
-    r(3, 10, 10, 1, C.ink);
+    // --- Torso -------------------------------------------------------------
+    r(3, 10, 10, 1, C.ink);              // collar line
     r(3, 11, 10, 6, shirt);
-    r(3, 11, 1, 6, shirtS);
-    r(12, 11, 1, 6, shirtS);
+    r(3, 11, 1, 6, shirtS);              // left shade
+    r(12, 11, 1, 6, shirtS);             // right shade
+    // button strip down the middle
+    r(7.5, 11, 1, 6, shirtS);
+    r(7.5, 12, 0.5, 0.5, C.brass);
+    r(7.5, 14, 0.5, 0.5, C.brass);
+    r(7.5, 16, 0.5, 0.5, C.brass);
+    // collar shadow / tie hint
+    r(6, 10.5, 4, 0.5, C.ink);
+    r(7.5, 10, 1, 1, shirtS);
 
-    // Arms — walk cycle
+    // --- Arms — walk cycle -------------------------------------------------
+    const drawArm = (x, y) => {
+        r(x, y, 2, 5, shirt);
+        r(x, y, 1, 5, shirtS);           // sleeve shadow
+        r(x, y + 4, 2, 1, C.ink);        // cuff
+        r(x, y + 5, 2, 1, skin);         // hand
+        r(x + 0.5, y + 5, 0.5, 0.5, skinS); // knuckle
+    };
     if (frame === 'walk1') {
-        r(1, 11, 2, 5, shirt); r(13, 12, 2, 5, shirt);
-        r(1, 16, 2, 1, skin); r(13, 17, 2, 1, skin);
+        drawArm(1, 11);
+        drawArm(13, 12);
     } else if (frame === 'walk2') {
-        r(2, 12, 2, 5, shirt); r(12, 11, 2, 5, shirt);
-        r(2, 17, 2, 1, skin); r(12, 16, 2, 1, skin);
+        drawArm(2, 12);
+        drawArm(12, 11);
     } else {
-        r(1, 12, 2, 5, shirt); r(13, 12, 2, 5, shirt);
-        r(1, 17, 2, 1, skin); r(13, 17, 2, 1, skin);
+        drawArm(1, 12);
+        drawArm(13, 12);
     }
 
-    // Legs
-    r(3, 17, 10, 1, C.ink);
-    if (frame === 'walk1') {
-        r(3, 18, 4, 5, pants); r(9, 18, 4, 5, pants);
-        r(3, 18, 1, 5, pantsS); r(9, 18, 1, 5, pantsS);
-    } else if (frame === 'walk2') {
-        r(4, 18, 4, 5, pants); r(8, 18, 4, 5, pants);
-        r(4, 18, 1, 5, pantsS); r(8, 18, 1, 5, pantsS);
-    } else {
-        r(3, 18, 4, 5, pants); r(9, 18, 4, 5, pants);
-        r(3, 18, 1, 5, pantsS); r(9, 18, 1, 5, pantsS);
-    }
-    // Shoes
+    // --- Legs --------------------------------------------------------------
+    r(3, 17, 10, 1, C.ink);              // waistband shadow
+    const drawLegs = (lx, rx) => {
+        r(lx, 18, 4, 5, pants);
+        r(rx, 18, 4, 5, pants);
+        r(lx, 18, 1, 5, pantsS);         // outer shadow
+        r(rx, 18, 1, 5, pantsS);
+        r(lx + 3, 18, 0.5, 5, pantsS);   // inner seam
+        r(rx + 3, 18, 0.5, 5, pantsS);
+        r(lx + 1.5, 20, 0.5, 0.5, shirtS); // pocket hint
+    };
+    if (frame === 'walk1')      drawLegs(3, 9);
+    else if (frame === 'walk2') drawLegs(4, 8);
+    else                        drawLegs(3, 9);
+
+    // --- Shoes — with heel + toe cap ---------------------------------------
     r(2, 23, 5, 1, C.boot);
     r(9, 23, 5, 1, C.boot);
+    r(2, 23, 5, 0.5, C.bootD);           // top shade
+    r(9, 23, 5, 0.5, C.bootD);
+    r(6, 23.5, 1, 0.5, C.bootD);         // toe cap
+    r(13, 23.5, 1, 0.5, C.bootD);
 }
 
 // ---------- EVIL/HALLUCINATED CIVILIAN (insane mode) -----------------------
@@ -379,47 +562,73 @@ function paintPersonEvil(ctx, opts = {}) {
         r(4, 0, 8, 2, hat.shadow);
         r(3, 1, 10, 1, hat.shadow);
         r(4, 2, 8, 1, hat.color);
+        r(4, 0, 8, 0.5, C.ink);         // deep shadow strip
+        r(7.5, 0.5, 1, 1, C.red);       // crimson badge
     } else {
-        r(3, 0, 1, 3, C.ink);       // left spike
-        r(7, 0, 2, 1, C.ink);       // center spike
-        r(12, 0, 1, 3, C.ink);      // right spike
-        r(4, 1, 8, 3, C.hair);      // hair mass
-        r(4, 1, 8, 1, C.ink);       // dark top
+        r(3, 0, 1, 3, C.ink);           // left spike
+        r(7, 0, 2, 1, C.ink);           // center spike
+        r(12, 0, 1, 3, C.ink);          // right spike
+        r(4, 1, 8, 3, C.hair);          // hair mass
+        r(4, 1, 8, 1, C.ink);           // dark top
+        // smaller ancillary spikes (half-pixel)
+        r(5, 0, 0.5, 1, C.ink);
+        r(9.5, 0, 0.5, 1, C.ink);
+        r(11.5, 0, 0.5, 1, C.ink);
     }
 
     // Head — sickly leathery skin with hard outline
     r(4, 4, 8, 5, C.skinD);
     r(4, 4, 1, 5, C.ink);
     r(11, 4, 1, 5, C.ink);
+    r(4, 4, 8, 0.5, C.ink);             // forehead shadow
+    r(11, 4.5, 0.5, 4, C.black);        // jaw depth
+    // Sunken cheeks
+    r(5, 7, 1, 0.5, C.ink);
+    r(10, 7, 1, 0.5, C.ink);
 
     // LARGE blazing red eyes (2x2 each) with bright hot core
     r(5, 5, 2, 2, C.red);
     r(9, 5, 2, 2, C.red);
     r(5, 5, 1, 1, C.redL);
     r(9, 5, 1, 1, C.redL);
+    r(5.5, 5.5, 0.5, 0.5, C.sun);       // hot cores
+    r(9.5, 5.5, 0.5, 0.5, C.sun);
 
     // Snarling grimace with dripping fangs
-    r(5, 8, 6, 1, C.ink);          // mouth shadow
-    r(6, 8, 4, 1, C.blood);        // blood gums
-    r(6, 9, 1, 2, C.white);        // left fang
-    r(9, 9, 1, 2, C.white);        // right fang
+    r(5, 8, 6, 1, C.ink);               // mouth shadow
+    r(6, 8, 4, 1, C.blood);             // blood gums
+    r(6, 9, 1, 2, C.white);             // left fang
+    r(9, 9, 1, 2, C.white);             // right fang
+    r(6, 10.5, 1, 0.5, C.blood);        // drip
+    r(9, 10.5, 1, 0.5, C.blood);
+    r(7.5, 8.5, 1, 0.5, C.blood);       // gum blood line
 
     // Thick neck
     r(7, 10, 2, 2, C.skinD);
+    r(7, 11, 2, 0.5, C.ink);
 
     // Torso — dark tattered shirt with torn rips
-    r(3, 12, 10, 1, C.ink);        // collar
-    r(3, 13, 10, 4, shirt);        // shirt body (already the dark shade)
+    r(3, 12, 10, 1, C.ink);             // collar
+    r(3, 13, 10, 4, shirt);
     r(3, 13, 1, 4, C.ink);
     r(12, 13, 1, 4, C.ink);
-    r(5, 14, 2, 2, C.ink);         // rip/tear left
-    r(9, 13, 2, 3, C.ink);         // rip/tear right
+    r(5, 14, 2, 2, C.ink);              // rip/tear left (skin beneath)
+    r(5, 14, 2, 0.5, C.skinD);
+    r(9, 13, 2, 3, C.ink);              // rip/tear right
+    r(9.5, 13.5, 0.5, 2, C.skinD);      // flesh through tear
+    // Bloody smear
+    r(4, 13.5, 1, 0.5, C.blood);
+    r(10, 15, 2, 0.5, C.blood);
 
     // Arms — outstretched aggressively
     r(1, 12, 2, 5, shirt);
     r(13, 12, 2, 5, shirt);
-    r(1, 17, 2, 1, C.skinD);       // clenched fist
+    r(1, 12, 1, 5, C.ink);              // shadow
+    r(14, 12, 1, 5, C.ink);
+    r(1, 17, 2, 1, C.skinD);            // clenched fist
     r(13, 17, 2, 1, C.skinD);
+    r(1, 17, 0.5, 0.5, C.ink);          // knuckle
+    r(14.5, 17, 0.5, 0.5, C.ink);
 
     // Belt
     r(3, 17, 10, 1, C.ink);
@@ -429,46 +638,87 @@ function paintPersonEvil(ctx, opts = {}) {
     r(9, 18, 4, 5, pants);
     r(3, 18, 1, 5, pantsS);
     r(9, 18, 1, 5, pantsS);
+    r(6, 18, 0.5, 5, pantsS);           // inner seam
+    r(12, 18, 0.5, 5, pantsS);
 
-    // Heavy dark boots
+    // Heavy dark boots with metal toe caps
     r(2, 23, 5, 1, C.bootD);
     r(9, 23, 5, 1, C.bootD);
+    r(6, 23.5, 1, 0.5, C.steelD);       // toe cap
+    r(13, 23.5, 1, 0.5, C.steelD);
 }
 
 // ---------- CHILD (small waddler) ------------------------------------------
 
 function paintChild(ctx, frame, evil = false) {
     const r = R(ctx);
-    // Hair
+    // Hair — blond mop with cowlick and highlights
     r(3, 0, 6, 2, C.blond);
     r(3, 2, 6, 1, C.ink);
+    r(5, 0, 1, 1, C.sun);              // cowlick
+    r(4, 1, 0.5, 0.5, C.white);         // hair highlight
+    r(7, 1.5, 0.5, 0.5, C.white);
     // Head (big for kid)
     r(3, 3, 6, 4, C.skin);
     r(3, 3, 1, 4, C.skinS);
     r(8, 3, 1, 4, C.skinS);
+    r(8, 3, 0.5, 4, C.ink);             // sharper jaw
+    r(7.5, 4, 0.5, 2, C.skin);          // cheek highlight
+    // Eyes — big round (2×1.5 native)
     if (evil) {
-        r(4, 4, 1, 1, C.red); r(7, 4, 1, 1, C.red);
+        r(4, 4, 1, 1, C.red);
+        r(7, 4, 1, 1, C.red);
+        r(4, 4, 0.5, 0.5, C.sun);
+        r(7, 4, 0.5, 0.5, C.sun);
     } else {
-        r(4, 4, 1, 1, C.ink); r(7, 4, 1, 1, C.ink);
+        r(3.5, 3.5, 1.5, 1.5, C.ink);
+        r(6.5, 3.5, 1.5, 1.5, C.ink);
+        r(4, 4, 1, 1, C.white);
+        r(7, 4, 1, 1, C.white);
+        r(4.5, 4, 0.5, 0.5, C.ink);     // pupil
+        r(7.5, 4, 0.5, 0.5, C.ink);
+        r(4, 4, 0.5, 0.5, C.whiteD);    // catchlight
+        r(7, 4, 0.5, 0.5, C.whiteD);
     }
-    r(5, 5, 2, 1, C.mouth);         // smile
-    // Torso — t-shirt (yellow)
+    // Nose + freckles + smile
+    r(5.5, 5, 1, 0.5, C.skinS);
+    r(4, 5.5, 0.5, 0.5, C.skinS);       // freckle
+    r(7.5, 5.5, 0.5, 0.5, C.skinS);     // freckle
+    r(5, 5, 2, 1, C.mouth);
+    r(5, 5, 2, 0.5, C.blood);           // upper lip
+    // Torso — yellow t-shirt with stripe and emblem dot
     r(2, 7, 8, 1, C.ink);
     r(2, 8, 8, 4, C.brass);
     r(2, 8, 1, 4, C.khakiD);
     r(9, 8, 1, 4, C.khakiD);
-    // arms
+    r(2, 10, 8, 0.5, C.sun);            // chest stripe highlight
+    r(5.5, 9, 1, 1, C.red);             // little badge
+    // arms with hand/cuff
     if (frame === 'walk1') {
-        r(1, 8, 1, 4, C.brass); r(10, 9, 1, 4, C.brass);
+        r(1, 8, 1, 4, C.brass);
+        r(10, 9, 1, 4, C.brass);
+        r(1, 11, 1, 1, C.skin);         // hand
+        r(10, 12, 1, 1, C.skin);
     } else {
-        r(1, 9, 1, 4, C.brass); r(10, 8, 1, 4, C.brass);
+        r(1, 9, 1, 4, C.brass);
+        r(10, 8, 1, 4, C.brass);
+        r(1, 12, 1, 1, C.skin);
+        r(10, 11, 1, 1, C.skin);
     }
-    // legs (shorts)
+    // legs (shorts) + knees
     r(3, 12, 2, 4, C.denim);
     r(7, 12, 2, 4, C.denim);
-    // shoes
+    r(3, 12, 1, 4, C.denimD);           // outer shade
+    r(7, 12, 1, 4, C.denimD);
+    r(3, 14, 2, 0.5, C.denimD);         // knee
+    r(7, 14, 2, 0.5, C.denimD);
+    // shoes (sneakers — white w/ sole)
     r(2, 16, 3, 1, C.white);
     r(7, 16, 3, 1, C.white);
+    r(2, 16.5, 3, 0.5, C.whiteD);
+    r(7, 16.5, 3, 0.5, C.whiteD);
+    r(3, 16, 0.5, 0.5, C.red);          // red stripe
+    r(8, 16, 0.5, 0.5, C.red);
 }
 
 // ---------- EVIL CHILD (insane mode 12x17) ---------------------------------
@@ -477,49 +727,69 @@ function paintChild(ctx, frame, evil = false) {
 function paintChildEvil(ctx) {
     const r = R(ctx);
     // Wild spiked hair
-    r(2, 0, 1, 2, C.ink);          // left spike
-    r(5, 0, 2, 1, C.ink);          // center spike
-    r(9, 0, 1, 2, C.ink);          // right spike
-    r(3, 1, 6, 2, C.hair);         // hair mass
-    r(3, 1, 6, 1, C.ink);          // dark top
+    r(2, 0, 1, 2, C.ink);
+    r(5, 0, 2, 1, C.ink);
+    r(9, 0, 1, 2, C.ink);
+    r(3, 1, 6, 2, C.hair);
+    r(3, 1, 6, 1, C.ink);
+    r(4.5, 0, 0.5, 1, C.ink);           // extra half-spike
+    r(7.5, 0, 0.5, 1, C.ink);
 
     // Head — sickly, slightly wider
     r(2, 3, 8, 5, C.skinD);
     r(2, 3, 1, 5, C.ink);
     r(9, 3, 1, 5, C.ink);
+    r(2, 3, 8, 0.5, C.ink);             // brow shadow
+    r(3, 6, 1, 0.5, C.ink);             // sunken cheek
+    r(8, 6, 1, 0.5, C.ink);
 
-    // Big glowing eyes (1x2 each with bright core)
+    // Big glowing eyes with hot core
     r(3, 4, 2, 2, C.red);
     r(7, 4, 2, 2, C.red);
     r(3, 4, 1, 1, C.redL);
     r(7, 4, 1, 1, C.redL);
+    r(3.5, 4.5, 0.5, 0.5, C.sun);
+    r(7.5, 4.5, 0.5, 0.5, C.sun);
 
-    // Creepy grin with tiny fang
-    r(4, 7, 4, 1, C.ink);          // mouth
-    r(5, 7, 2, 1, C.blood);        // gums
-    r(5, 8, 1, 1, C.white);        // tiny fang
+    // Creepy grin with twin fangs + drool
+    r(4, 7, 4, 1, C.ink);
+    r(5, 7, 2, 1, C.blood);
+    r(5, 8, 1, 1, C.white);             // fang 1
+    r(6.5, 8, 0.5, 1, C.white);         // fang 2
+    r(5, 8.5, 0.5, 0.5, C.blood);       // drool
 
     // Neck
     r(5, 8, 2, 1, C.skinD);
+    r(5, 8.5, 2, 0.5, C.ink);
 
-    // Tattered shirt (darker yellow)
+    // Tattered shirt with rip showing flesh
     r(2, 9, 8, 1, C.ink);
     r(2, 10, 8, 3, C.sunD);
     r(2, 10, 1, 3, C.ink);
     r(9, 10, 1, 3, C.ink);
-    r(4, 11, 2, 1, C.ink);         // rip
+    r(4, 11, 2, 1, C.ink);
+    r(4, 11, 2, 0.5, C.skinD);          // skin through rip
+    r(6.5, 10.5, 0.5, 1, C.blood);      // smear
 
-    // Arms
+    // Arms clenched into claw fists
     r(1, 10, 1, 4, C.sunD);
     r(10, 10, 1, 4, C.sunD);
+    r(1, 14, 1, 0.5, C.skinD);          // fist
+    r(10, 14, 1, 0.5, C.skinD);
+    r(1, 14, 0.5, 0.5, C.white);        // tiny claw
+    r(10.5, 14, 0.5, 0.5, C.white);
 
     // Dark pants
     r(3, 13, 2, 3, C.ink);
     r(7, 13, 2, 3, C.ink);
+    r(3, 13, 0.5, 3, C.black);
+    r(7, 13, 0.5, 3, C.black);
 
-    // Dark shoes
+    // Dark shoes with spike studs
     r(2, 16, 3, 1, C.bootD);
     r(7, 16, 3, 1, C.bootD);
+    r(3, 16, 0.5, 0.5, C.steel);        // stud
+    r(8, 16, 0.5, 0.5, C.steel);
 }
 
 // ---------- HOUSE ----------------------------------------------------------

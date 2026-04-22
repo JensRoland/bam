@@ -250,10 +250,10 @@ function buildPlayingContext(opts) {
     // molotov are all "weapons" — a single key triggers whichever is equipped,
     // so the player only ever has to think about what they're holding, not
     // which button to press.
-    k.onKeyPress(['x', 'z'], () => useWeapon());
+    k.onKeyPress('x', () => useWeapon());
     // SMG fires continuously while the key is held; other weapons stay
     // press-to-fire (their own cooldown guards block re-entry anyway).
-    k.onKeyDown(['x', 'z'], () => {
+    k.onKeyDown('x', () => {
         if (player.weapons[player.weaponIdx] === 'smg') useWeapon();
     });
 
@@ -264,8 +264,49 @@ function buildPlayingContext(opts) {
         }
     });
 
+    /**
+     * If the player is standing right in front of the intact front door, any
+     * attack lands on it regardless of facing or spawn-offset math. Returns
+     * true when the door was hit and useWeapon should early-return.
+     */
+    function tryHitDoor(wp) {
+        const door = k.get('door')[0];
+        if (!door) return false;
+        const doorCx = door.pos.x + door.width / 2;
+        if (Math.abs(p.pos.x - doorCx) > 40) return false;
+        const rage = k.time() < player.rageUntil;
+        let dmg = 0;
+        let consumesAmmo = true;
+        if (wp === 'fists')             { dmg = rage ? 50 : 25;   consumesAmmo = false; }
+        else if (wp === 'bat')          { dmg = rage ? 90 : 45;   consumesAmmo = false; }
+        else if (wp === 'handgun')      dmg = rage ? 80 : 40;
+        else if (wp === 'shotgun')      dmg = rage ? 60 : 30;
+        else if (wp === 'smg')          dmg = rage ? 30 : 15;
+        else if (wp === 'taser')        dmg = 6;
+        else if (wp === 'flamethrower') dmg = 20;
+        else if (wp === 'molotov')      dmg = 40;
+        else if (wp === 'grenade')      dmg = 70;
+        else return false;
+        if (consumesAmmo) {
+            const count = player.ammo[wp];
+            if (count == null || count <= 0) return false;
+            player.ammo[wp] = count - 1;
+        }
+        if (wp === 'molotov') {
+            stats.arsonCount++;
+            if (opts.spawnFireAt) opts.spawnFireAt(door.pos.x + 10);
+        }
+        player.lastAttack = k.time();
+        player.lastFire = k.time();
+        door.hurt(dmg);
+        // Flash at the door so the player sees the hit register.
+        k.add([k.sprite('flash'), k.pos(doorCx, door.pos.y + 8), k.anchor('center'), k.opacity(1), k.lifespan(0.08), k.z(40)]);
+        return true;
+    }
+
     function useWeapon() {
         const wp = player.weapons[player.weaponIdx];
+        if (tryHitDoor(wp)) return;
         if (wp === 'fists' || wp === 'bat') {
             player.lastAttack = k.time();
             const isBat = wp === 'bat';
@@ -316,17 +357,6 @@ function buildPlayingContext(opts) {
             const dir = player.facing;
             const bx = p.pos.x + (dir > 0 ? 28 : -20);
             const by = p.pos.y + 20;
-            // Intercept: player is point-blank at door — bullets are fast enough
-            // to tunnel through the 20px hitbox, so we hit the door directly.
-            const doorTarget = k.get('door')[0];
-            if (doorTarget && dir === 1 &&
-                p.pos.x < doorTarget.pos.x + 20 && p.pos.x > doorTarget.pos.x - 70) {
-                player.ammo.handgun--;
-                player.lastAttack = k.time();
-                doorTarget.hurt(k.time() < player.rageUntil ? 80 : 40);
-                k.add([k.sprite('flash'), k.pos(bx, by - 4), k.anchor('center'), k.opacity(1), k.lifespan(0.06)]);
-                return;
-            }
             player.ammo.handgun--;
             player.lastAttack = k.time();
             const bullet = k.add([
@@ -351,18 +381,6 @@ function buildPlayingContext(opts) {
             const dir = player.facing;
             const mx = p.pos.x + (dir > 0 ? 20 : -20);
             const my = p.pos.y + 4;
-            // Intercept: player is point-blank at door — molotov at this range
-            // hits the door and ignites the ground right there (bad for the player).
-            const doorTarget = k.get('door')[0];
-            if (doorTarget && dir === 1 &&
-                p.pos.x < doorTarget.pos.x + 20 && p.pos.x > doorTarget.pos.x - 70) {
-                player.ammo.molotov--;
-                stats.arsonCount++;
-                player.lastAttack = k.time();
-                doorTarget.hurt(40);
-                if (opts.spawnFireAt) opts.spawnFireAt(doorTarget.pos.x + 10);
-                return;
-            }
             player.ammo.molotov--;
             stats.arsonCount++;
             player.lastAttack = k.time();
@@ -1140,64 +1158,41 @@ function buildPlayingContext(opts) {
                 break;
             case 'ammo':
                 stats.stoleItems++;
-                if (!player.weapons.includes('handgun')) {
-                    player.weapons.push('handgun');
-                    player.weaponIdx = player.weapons.indexOf('handgun');
-                }
+                if (!player.weapons.includes('handgun')) player.weapons.push('handgun');
                 player.ammo.handgun += 12;
                 break;
             case 'bat':
                 stats.stoleItems++;
-                if (!player.weapons.includes('bat')) {
-                    player.weapons.push('bat');
-                    player.weaponIdx = player.weapons.indexOf('bat');
-                }
+                if (!player.weapons.includes('bat')) player.weapons.push('bat');
                 break;
             case 'molotov':
                 stats.stoleItems++;
-                if (!player.weapons.includes('molotov')) {
-                    player.weapons.push('molotov');
-                }
+                if (!player.weapons.includes('molotov')) player.weapons.push('molotov');
                 player.ammo.molotov = (player.ammo.molotov || 0) + 1;
                 break;
             case 'shotgun':
                 stats.stoleItems++;
-                if (!player.weapons.includes('shotgun')) {
-                    player.weapons.push('shotgun');
-                    player.weaponIdx = player.weapons.indexOf('shotgun');
-                }
+                if (!player.weapons.includes('shotgun')) player.weapons.push('shotgun');
                 player.ammo.shotgun = (player.ammo.shotgun || 0) + 6;
                 break;
             case 'smg':
                 stats.stoleItems++;
-                if (!player.weapons.includes('smg')) {
-                    player.weapons.push('smg');
-                    player.weaponIdx = player.weapons.indexOf('smg');
-                }
+                if (!player.weapons.includes('smg')) player.weapons.push('smg');
                 player.ammo.smg = (player.ammo.smg || 0) + 30;
                 break;
             case 'taser':
                 stats.stoleItems++;
-                if (!player.weapons.includes('taser')) {
-                    player.weapons.push('taser');
-                    player.weaponIdx = player.weapons.indexOf('taser');
-                }
+                if (!player.weapons.includes('taser')) player.weapons.push('taser');
                 player.ammo.taser = (player.ammo.taser || 0) + 5;
                 break;
             case 'flamethrower':
                 stats.stoleItems++;
-                if (!player.weapons.includes('flamethrower')) {
-                    player.weapons.push('flamethrower');
-                    player.weaponIdx = player.weapons.indexOf('flamethrower');
-                }
+                if (!player.weapons.includes('flamethrower')) player.weapons.push('flamethrower');
                 player.ammo.flamethrower = (player.ammo.flamethrower || 0) + 24;
                 break;
             case 'grenade':
                 stats.stoleItems++;
-                if (!player.weapons.includes('grenade')) {
-                    player.weapons.push('grenade');
-                    player.weaponIdx = player.weapons.indexOf('grenade');
-                }
+                if (!player.weapons.includes('grenade')) player.weapons.push('grenade');
                 player.ammo.grenade = (player.ammo.grenade || 0) + 2;
                 break;
         }
@@ -1691,10 +1686,10 @@ function gameScene(opts = {}) {
     }
 
     // Contextual hint above the door:
-    //   - intact: "Z/X BREAK"  (tells the player how to get inside)
+    //   - intact: "X BREAK"  (tells the player how to get inside)
     //   - broken: "↓ ENTER"    (prompt to step into the house)
     const doorHint = k.add([
-        k.text('Z/X BREAK', { size: 20 }),
+        k.text('X BREAK', { size: 20 }),
         k.pos(DOOR_CENTER_X, DOOR_Y - 20),
         k.anchor('center'),
         k.color(255, 240, 80),
@@ -1704,7 +1699,7 @@ function gameScene(opts = {}) {
     doorHint.onUpdate(() => {
         const dx = Math.abs(DOOR_CENTER_X - (p.pos.x + 16));
         if (dx >= 80) { doorHint.opacity = 0; return; }
-        const label = house.broken ? '↓ ENTER' : 'Z/X BREAK';
+        const label = house.broken ? '↓ ENTER' : 'X BREAK';
         if (doorHint.text !== label) doorHint.text = label;
         doorHint.opacity = 1;
     });

@@ -1475,7 +1475,7 @@ function splashScene() {
     lines.forEach((ln, i) => {
         k.add([
             k.text(ln, { size: 10 }),
-            k.pos(20, 142 + i * 12),
+            k.pos(80, 142 + i * 12),
             k.anchor('topleft'),
             k.color(200, 200, 200),
         ]);

@@ -1462,25 +1462,26 @@ function splashScene() {
         k.color(220, 220, 220),
     ]);
 
-    // --- Left column: player + opening quote -------------------------------
-    k.add([k.sprite('playerIdle'), k.pos(50, 140), k.anchor('top')]);
+    // --- Left column: opening quote / middle: BAM --------------------------
     const lines = [
-        '"Your pickup truck',
+        'Your pickup truck',
         'broke down in a',
         'strange place.',
         'Something ain\'t',
         'right around here.',
         'Lock \'n\' load,',
-        'soldier!"',
+        'soldier!',
     ];
     lines.forEach((ln, i) => {
         k.add([
-            k.text(ln, { size: 9 }),
-            k.pos(96, 142 + i * 11),
+            k.text(ln, { size: 10 }),
+            k.pos(20, 142 + i * 12),
             k.anchor('topleft'),
             k.color(200, 200, 200),
         ]);
     });
+    // BAM front and centre.
+    k.add([k.sprite('playerIdle'), k.pos(k.width() / 2, 150), k.anchor('top')]);
 
     // --- Right column: controls --------------------------------------------
     const ctrlCenterX = 360;

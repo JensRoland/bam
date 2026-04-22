@@ -661,9 +661,9 @@ function buildPlayingContext(opts) {
         player.invulnUntil = k.time() + 0.4;
         if (src?.pos) {
             const dir = p.pos.x < src.pos.x ? -1 : 1;
-            player.knockVx = dir * 320;
-            player.stunUntil = k.time() + 0.2;
-            p.vel.y = -360;
+            player.knockVx = dir * 200;
+            player.stunUntil = k.time() + 0.15;
+            p.vel.y = -240;
         }
         if (player.health <= 0) {
             player.health = 0;
@@ -1906,14 +1906,15 @@ function houseScene() {
     // Shared player context — spawn just inside the door so the player
     // doesn't immediately cross the exit trigger on entry.
     const { p, spawnEnemy, spawnPickup, consumePickup, nearestInteractable } =
-        buildPlayingContext({ spawnX: 160, minX: 40, maxX: k.width() - 40 });
+        buildPlayingContext({ spawnX: 110, minX: 40, maxX: k.width() - 40 });
 
     // Fixed interior camera — the room fits on one screen.
     k.setCamPos(k.width() / 2, WORLD.groundY - 78);
 
-    // Inhabitants + the syringe next to the cabinet.
-    spawnEnemy('father',  220, 'hostile', 'father-house');
-    spawnEnemy('mother',  320, 'hostile', 'mother-house');
+    // Inhabitants + the syringe next to the cabinet. Enemies spaced deep
+    // in the room so the first hit doesn't knock BAM through the exit.
+    spawnEnemy('father',  300, 'hostile', 'father-house');
+    spawnEnemy('mother',  400, 'hostile', 'mother-house');
     spawnPickup('syringe', k.width() - 80, WORLD.groundY - 8, 'syringe-house');
 
     // Down grabs whatever pickup is under foot (no door logic in here — the

@@ -10,7 +10,7 @@ import html
 import os
 import re
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote_plus
 
 from flask import Flask, Response, abort, jsonify, request, send_from_directory
 from pydantic import BaseModel, Field, ValidationError, field_validator
@@ -73,9 +73,14 @@ def _render_index(
                 f"{clean_name} just hit {clean_score} on BRAVE AMERICA MAN. "
                 "Your turn, champion. 🇺🇸💪"
             )
+        # quote_plus matches browser URLSearchParams (space → "+"), so the
+        # canonical og:url byte-matches the URL the share button actually
+        # opens. Mixing "%20" (quote) with "+" (URLSearchParams) produced a
+        # canonical URL that diverged from the shared URL, tripping a 403
+        # on the Facebook scrape when names contained spaces.
         params = (
-            f"s={quote(clean_score, safe=':')}"
-            f"&n={quote(clean_name)}"
+            f"s={quote_plus(clean_score, safe=':')}"
+            f"&n={quote_plus(clean_name)}"
             f"&t={'win' if ending == 'win' else 'crime'}"
         )
         og_image = f"{site_root}og?{params}"

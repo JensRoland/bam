@@ -10,7 +10,7 @@ import html
 import os
 import re
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote_plus
 
 from flask import Flask, Response, abort, jsonify, request, send_from_directory
 from pydantic import BaseModel, Field, ValidationError, field_validator
@@ -73,21 +73,33 @@ def _render_index(
                 f"{clean_name} just hit {clean_score} on BRAVE AMERICA MAN. "
                 "Your turn, champion. 🇺🇸💪"
             )
-        og_image = (
-            f"{site_root}og?s={quote(clean_score, safe=':')}"
-            f"&n={quote(clean_name)}"
+        # quote_plus matches browser URLSearchParams (space → "+"), so the
+        # canonical og:url byte-matches the URL the share button actually
+        # opens. Mixing "%20" (quote) with "+" (URLSearchParams) produced a
+        # canonical URL that diverged from the shared URL, tripping a 403
+        # on the Facebook scrape when names contained spaces.
+        params = (
+            f"s={quote_plus(clean_score, safe=':')}"
+            f"&n={quote_plus(clean_name)}"
             f"&t={'win' if ending == 'win' else 'crime'}"
         )
+        og_image = f"{site_root}og?{params}"
+        # Unique canonical URL per share — Facebook dedupes its OG cache by
+        # og:url, so if every share pointed to site_root the first scrape
+        # would freeze the preview (title/image/description) for all later
+        # shares of the same site.
+        og_url = f"{site_root}?{params}"
     else:
         title = DEFAULT_TITLE
         desc = DEFAULT_DESC
         og_image = site_root + DEFAULT_OG_IMAGE_PATH.lstrip("/")
+        og_url = site_root
 
     return (
         tpl
         .replace("{{og_title}}", html.escape(title, quote=True))
         .replace("{{og_description}}", html.escape(desc, quote=True))
-        .replace("{{og_url}}", html.escape(site_root, quote=True))
+        .replace("{{og_url}}", html.escape(og_url, quote=True))
         .replace("{{og_image}}", html.escape(og_image, quote=True))
         .replace("{{prefix}}", html.escape(URL_PREFIX, quote=True))
     )

@@ -52,7 +52,7 @@ const SENTENCES = {
     brokeDoor: 2,        // breaking and entering
     drankBeer: 0,        // not a crime on its own
     tookDrugs: 1,        // controlled substance
-    theft: 1,            // handgun / ammo / cap / bat
+    theft: 1,            // beer / ammo / bat / molotov / firearms
     arson: 15,           // per molotov thrown
     sexOffense: 20,      // entering the ladies' changing room, per offense
     dog: 1,
@@ -1277,7 +1277,7 @@ function buildPlayingContext(opts) {
                 player.health = 120;
                 break;
             case 'cap':
-                stats.stoleItems++;
+                // Baseball cap on the ground — litter, not theft.
                 player.invulnUntil = k.time() + 10;
                 break;
             case 'ammo':
@@ -1322,7 +1322,7 @@ function buildPlayingContext(opts) {
                 player.ammo.flamethrower = (player.ammo.flamethrower || 0) + 24;
                 break;
             case 'grenade':
-                stats.stoleItems++;
+                // Narratively a discarded lithium battery — litter, not theft.
                 if (!player.weapons.includes('grenade')) player.weapons.push('grenade');
                 player.ammo.grenade = (player.ammo.grenade || 0) + 2;
                 break;

@@ -1,12 +1,13 @@
 # Brave America Man (B.A.M.)
 
-Viral political-satire video game. 8-bit sidescroller that looks like a violent shooter — until you realize the "enemies" are civilians, children, cops and a church choir, and the "score" is your prison sentence.
+![B.A.M. splash screen](docs/splash-screen.png)
 
-> *"Man, what a night. Your pickup truck broke down in a strange town. I'll
-> bet this place is crawling with liberal snowflakes and illegals. Good thing
+Viral political-satire video game. 8-bit sidescroller that looks like a violent shooter — until you realize the "enemies" are civilians, children, cops and the local church choir, and the "score" is your prison sentence.
+
+> *"Man, what a night. Your pickup truck broke down in a strange town. Good thing
 > you brought your guns. Lock 'n' load, soldier! Hoo-rah!"*
 
-If you play through without drinking, drugging, breaking into houses or hurting anyone, everyone stays peaceful, the choir sings, and you actually **win**. Shoot the dog? Break down the door? The state is waiting for you.
+If you play through without stealing, drinking, doing drugs, breaking into houses or hurting anyone, everyone stays peaceful, the choir sings, and you actually **win**. Shoot the dog? Break down the door? The state is waiting for you.
 
 ## Quick start
 
@@ -29,9 +30,9 @@ Default host/port is `127.0.0.1:8000`. Override with `BAM_HOST` / `BAM_PORT` env
 | Key                 | Action                     |
 |---------------------|----------------------------|
 | `←` / `→` / `A` `D` | Move left / right          |
-| `↑` / `Space` / `W` | Jump                       |
+| `↑` / `W`           | Jump                       |
 | `↓` / `S`           | Grab pickup / interact     |
-| `X` (or `Z`)        | Use current weapon         |
+| `X`                 | Use current weapon         |
 | `C`                 | Cycle weapon               |
 | `Tab` (splash)      | Scoreboard                 |
 | `Esc`               | Back to splash             |
@@ -48,14 +49,13 @@ Open [http://127.0.0.1:8000/?debug](http://127.0.0.1:8000/?debug) to land in a s
 
 - **Invincible player** — you can't die, so you can sit in the middle of a crowd and test things.
 - **Full arsenal** pre-equipped: fists, bat, handgun, shotgun, SMG, taser, flamethrower, grenade, molotov — 500 ammo each. Cycle with `C`, fire with `X`.
-- **Enemies stream in** from the right every 0.3–1.5s and march left, hostile on sight. One of every kind rotates through, including SWAT. Cap is 40 concurrent; any that wander off the left edge are culled.
-- **Fixed camera** — the arena is one screen wide, no parallax, no level geometry beyond the ground strip.
+- **Enemies stream in** from the right and march left, hostile on sight. One of every kind rotates through, including SWAT. Cap is 40 concurrent; any that wander off the left edge are culled.
 - **No scoring, no persistence** — runs here don't touch the scoreboard or `run` state. `Esc` returns to the splash.
 
 ## Architecture
 
 ```text
-backend/                 Python 3.12+, FastAPI + SQLite, uv-managed
+backend/                 Python 3.12+, Flask + SQLite, uv-managed
   bam_backend/
     app.py               API routes + static file serving
     store.py             ScoreStore facade over sqlite3
@@ -85,34 +85,9 @@ All sprites are painted procedurally from colour rects onto tiny offscreen canva
 - `POST /api/scores` with `{name, ending, kills, time_ms, health, years}` — `ending` must be `win` or `crime`.
 - `GET /api/scores/top?limit=50` — wins ranked by fastest time, then crimes ranked by prison sentence (satirical ordering: worst criminals make the wall of shame).
 
-### Viral share
-
-After a run ends and the score is saved, the share overlay opens
-automatically. Users can post to X / Facebook / Reddit, copy a share link,
-or use the native Web Share sheet on mobile. The share payload is
-deliberately **spoiler-free** — it reads "SCORE: 438 on B.A.M., your move
-champion" and never mentions the words "prison", "years" or "crime". The
-surprise only lands when the friend actually plays.
-
-Share URLs look like `/?s=438&n=JENS&t=crime&ref=share`. When a visitor
-arrives at such a URL:
-
-- the backend serves `index.html` with personalized `og:title` /
-  `og:description` / `twitter:*` meta tags, so unfurls on social media
-  show the sharer's score;
-- the splash shows a yellow challenge banner calling the friend out
-  ("JENS scored 438. You soldier enough to top it?").
-
-Query-param values are sanitized server-side (allow-list + HTML escape)
-before being injected into meta tags to keep the unfurl path XSS-safe.
-
-The share module lives at [frontend/js/share.js](frontend/js/share.js);
-templating lives in `_render_index` in
-[backend/bam_backend/app.py](backend/bam_backend/app.py).
-
 ## Smoke test
 
-No unit tests yet — backend is ~120 lines and the game is visual. Manual round-trip:
+No unit tests yet. Manual round-trip:
 
 ```bash
 curl -s http://127.0.0.1:8000/api/health
@@ -126,16 +101,10 @@ curl -s http://127.0.0.1:8000/api/scores/top
 
 - Single process — Flask runs natively as WSGI, so it drops straight into cPanel shared hosting via Passenger, or behind gunicorn / Caddy / Nginx on a tiny VPS. See `passenger_wsgi.py` at the repo root for the cPanel entry point, and `requirements.txt` for the pip-installable deps (cPanel doesn't speak `uv`).
 - SQLite is fine for expected load. For higher write volumes, swap `ScoreStore` for a Postgres implementation — that's the only thing that needs to change.
-- The frontend is entirely static and can be pushed to a CDN separately if you ever want to split concerns.
+- The frontend is entirely static and can be pushed to a CDN separately if desired.
 
 ## Next steps
 
-- Generate a dynamic OG preview image (`frontend/og.png` is referenced in
-  meta tags but not yet rendered). A 1200×630 PNG with the title + the
-  sharer's score would lift unfurl CTR significantly.
-- Track share events on the backend (`POST /api/scores/{id}/share` to
-  increment a counter) so we can see which players drive the most traffic
-  and measure the viral coefficient.
 - Music + SFX. KAPLAY supports `loadSound` / `play`; a chiptune loop and
   shot/hit/pickup cues would pull weight.
 - Mobile / touch controls (on-screen D-pad + action buttons).

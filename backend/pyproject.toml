@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "flask>=3.0",
     "pydantic>=2.9",
+    "Pillow>=8.4",
 ]
 
 [tool.uv]

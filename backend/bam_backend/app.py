@@ -10,10 +10,12 @@ import html
 import os
 import re
 from pathlib import Path
+from urllib.parse import quote
 
-from flask import Flask, abort, jsonify, request, send_from_directory
+from flask import Flask, Response, abort, jsonify, request, send_from_directory
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
+from . import og
 from .store import ScoreStore
 
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -32,7 +34,16 @@ DEFAULT_DESC = (
     "8-bit sidescroller. Pickup truck broke down in a strange town. "
     "Lock and load, soldier. Hoo-rah!"
 )
-OG_IMAGE_PATH = "/og.png"
+DEFAULT_OG_IMAGE_PATH = "/og-base-win.webp"
+
+
+def _clean_name(name: str) -> str:
+    cleaned = "".join(c for c in name[:16] if c.isalnum() or c in " _-.!?'").strip()
+    return cleaned or "CHAMPION"
+
+
+def _clean_score(score: str) -> str:
+    return re.sub(r"[^0-9:]", "", score)[:10] or "?"
 
 
 def _render_index(
@@ -44,12 +55,11 @@ def _render_index(
 ) -> str:
     """Template frontend/index.html, injecting social-preview meta tags."""
     tpl = (FRONTEND_DIR / "index.html").read_text(encoding="utf-8")
+    site_root = base_url.rstrip("/") + URL_PREFIX + "/"
 
     if score and name:
-        clean_name = name[:16]
-        clean_name = "".join(c for c in clean_name if c.isalnum() or c in " _-.!?'")
-        clean_name = clean_name.strip() or "CHAMPION"
-        clean_score = re.sub(r"[^0-9:]", "", score)[:10] or "?"
+        clean_name = _clean_name(name)
+        clean_score = _clean_score(score)
         if ending == "win":
             title = f"{clean_name} beat B.A.M. in {clean_score}"
             desc = (
@@ -62,18 +72,21 @@ def _render_index(
                 f"{clean_name} just hit {clean_score} on BRAVE AMERICA MAN. "
                 "Your turn, champion. 🇺🇸💪"
             )
+        og_image = (
+            f"{site_root}og?s={quote(clean_score, safe=':')}"
+            f"&n={quote(clean_name)}"
+            f"&t={'win' if ending == 'win' else 'crime'}"
+        )
     else:
         title = DEFAULT_TITLE
         desc = DEFAULT_DESC
-
-    og_url = base_url.rstrip("/") + URL_PREFIX + "/"
-    og_image = og_url + OG_IMAGE_PATH.lstrip("/")
+        og_image = site_root + DEFAULT_OG_IMAGE_PATH.lstrip("/")
 
     return (
         tpl
         .replace("{{og_title}}", html.escape(title, quote=True))
         .replace("{{og_description}}", html.escape(desc, quote=True))
-        .replace("{{og_url}}", html.escape(og_url, quote=True))
+        .replace("{{og_url}}", html.escape(site_root, quote=True))
         .replace("{{og_image}}", html.escape(og_image, quote=True))
         .replace("{{prefix}}", html.escape(URL_PREFIX, quote=True))
     )
@@ -131,6 +144,25 @@ def create_app() -> Flask:
             years=payload.years,
         )
         return jsonify({"score": score.to_dict()})
+
+    @app.get("/og")
+    def og_image():
+        name = _clean_name(request.args.get("n", ""))
+        score = _clean_score(request.args.get("s", ""))
+        ending = "win" if request.args.get("t") == "win" else "crime"
+        # Score doubles as years for crime runs (the API's `years` value is
+        # what the share URL puts in `s`); for wins the value is "m:ss" so
+        # we treat it as 0 for base-image bucketing.
+        try:
+            years = int(score) if ending == "crime" else 0
+        except ValueError:
+            years = 0
+        png = og.render(name=name, score=score, ending=ending, years=years)
+        return Response(
+            png,
+            mimetype="image/png",
+            headers={"Cache-Control": "public, max-age=86400, immutable"},
+        )
 
     @app.get("/")
     def root():

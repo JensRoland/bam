@@ -9,7 +9,7 @@
  */
 
 import kaplay from 'https://unpkg.com/kaplay@3001.0.19/dist/kaplay.mjs';
-import { registerScenes } from './scenes.js';
+import { registerScenes, setCalmMode, bootstrapEndingTest } from './scenes.js';
 
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('game'));
 const loading = document.getElementById('loading');
@@ -35,8 +35,20 @@ try {
     // `?debug` (e.g. open http://127.0.0.1:8000/?debug) skips splash and drops
     // straight into a debugging arena: infinite health, all weapons with 500
     // ammo each, random enemies streaming in from the right.
-    const debugMode = new URLSearchParams(window.location.search).has('debug');
-    k.go(debugMode ? 'debug' : 'splash');
+    const params = new URLSearchParams(window.location.search);
+    const debugMode = params.has('debug');
+    const calmMode = params.has('calm');
+    const endingTest = params.has('ending');
+    // `?calm` boots straight into the outdoor game world in art-testing mode —
+    // peaceful NPCs, invincible player, full arsenal, `I` toggles insane mode.
+    // `?ending` skips straight into the church boss fight with the full
+    // arsenal so the end cinematic can be iterated on quickly.
+    if (calmMode) setCalmMode(true);
+    if (endingTest) {
+        bootstrapEndingTest();
+    } else {
+        k.go(calmMode ? 'game' : (debugMode ? 'debug' : 'splash'));
+    }
     if (loading) loading.remove();
 } catch (err) {
     console.error('[bam] boot failed:', err);

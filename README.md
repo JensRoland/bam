@@ -33,7 +33,7 @@ Default host/port is `127.0.0.1:8000`. Override with `BAM_HOST` / `BAM_PORT` env
 | `↑` / `W`           | Jump                       |
 | `↓` / `S`           | Grab pickup / interact     |
 | `X`                 | Use current weapon         |
-| `C`                 | Cycle weapon               |
+| `Z`                 | Cycle weapon               |
 | `Tab` (splash)      | Scoreboard                 |
 | `Esc`               | Back to splash             |
 

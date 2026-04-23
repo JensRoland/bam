@@ -1059,6 +1059,27 @@ function paintFloorInt(ctx) {
     r(12, 3, 1, 1, C.woodD);
 }
 
+/** Insane-mode floor: scorched flagstones with glowing cracks. */
+function paintFloorIntInsane(ctx) {
+    const r = R(ctx);
+    r(0, 0, 16, 16, C.ink2);
+    // Jagged tile grout lines
+    r(0, 0, 16, 0.5, C.ink);
+    r(0, 15, 16, 1, C.ink);
+    r(0, 0, 0.5, 16, C.ink);
+    r(8, 0, 0.5, 16, C.ink);
+    // Glowing red cracks
+    r(4, 2, 1, 3, C.redD);
+    r(4, 5, 0.5, 1, C.red);
+    r(11, 7, 3, 1, C.redD);
+    r(12, 8, 1, 2, C.red);
+    r(2, 10, 4, 1, C.redD);
+    r(5, 10.5, 1, 0.5, C.red);
+    // Soot patches
+    r(6, 3, 2, 2, C.black);
+    r(13, 12, 2, 2, C.black);
+}
+
 function paintWallInt(ctx) {
     const r = R(ctx);
     // Painted interior wall — 16×16 tile, pale flag-blue
@@ -1070,6 +1091,37 @@ function paintWallInt(ctx) {
     r(3, 3, 1, 1, C.khakiD);
     r(10, 5, 1, 1, C.khakiD);
     r(6, 8, 1, 1, C.khakiD);
+}
+
+/**
+ * Insane-mode interior wall: blood-smeared dark masonry that tiles seamlessly.
+ * Swapped in place of wallInt by each interior scene when isInsane() flips.
+ */
+function paintWallIntInsane(ctx) {
+    const r = R(ctx);
+    // Dark stone base
+    r(0, 0, 16, 16, C.stoneD);
+    r(0, 0, 16, 16, C.ink2);
+    // Mortar lines — brick pattern offset by row
+    r(0, 4, 16, 0.5, C.ink);
+    r(0, 8, 16, 0.5, C.ink);
+    r(0, 12, 16, 0.5, C.ink);
+    r(0, 0, 0.5, 16, C.ink);
+    r(8, 0, 0.5, 4, C.ink);
+    r(4, 4, 0.5, 4, C.ink);
+    r(12, 4, 0.5, 4, C.ink);
+    r(8, 8, 0.5, 4, C.ink);
+    r(4, 12, 0.5, 4, C.ink);
+    r(12, 12, 0.5, 4, C.ink);
+    // Subtle stone highlights
+    r(1, 1, 2, 0.5, C.stone);
+    r(9, 5, 2, 0.5, C.stone);
+    r(5, 9, 2, 0.5, C.stone);
+    // Blood smear trailing down
+    r(6, 2, 1, 6, C.blood);
+    r(6.5, 8, 0.5, 3, C.blood);
+    r(13, 10, 1, 4, C.blood);
+    r(13, 14, 1.5, 1.5, C.redD);
 }
 
 function paintExitDoor(ctx) {
@@ -1720,6 +1772,881 @@ function paintHeart(ctx) {
     r(1, 2, 1, 1, C.redL);
 }
 
+// ---------- BANK (stone + columns) -----------------------------------------
+
+function paintBank(ctx, insane = false) {
+    const r = R(ctx);
+    const wall = insane ? C.stoneD : C.stone;
+    const wallS = insane ? C.ink : C.stoneD;
+    const trim = insane ? C.redD : C.gunD;
+    // native 80x60
+    // ground shadow
+    r(0, 58, 80, 2, insane ? C.ink : C.grassD);
+    // base plinth
+    r(0, 52, 80, 6, wallS);
+    r(0, 52, 80, 1, C.ink);
+    // main wall
+    r(4, 14, 72, 38, wall);
+    r(4, 14, 72, 1, wallS);
+    r(4, 51, 72, 1, C.ink);
+    // cornice band
+    r(2, 12, 76, 2, wallS);
+    r(2, 11, 76, 1, C.ink);
+    // roof slab (flat)
+    r(0, 8, 80, 4, wall);
+    r(0, 8, 80, 1, wallS);
+    // pediment triangle
+    r(28, 4, 24, 4, wall);
+    r(32, 2, 16, 2, wall);
+    r(28, 4, 24, 1, wallS);
+    // columns (4 fluted)
+    for (const cx of [10, 26, 46, 62]) {
+        r(cx, 14, 6, 38, wall);
+        r(cx, 14, 1, 38, wallS);
+        r(cx + 5, 14, 1, 38, wallS);
+        r(cx + 2, 14, 0.5, 38, wallS); // flute
+        // capital
+        r(cx - 1, 14, 8, 2, wallS);
+        // base
+        r(cx - 1, 50, 8, 2, wallS);
+    }
+    // BANK sign (brass)
+    r(30, 5, 20, 4, trim);
+    r(30, 5, 20, 1, insane ? C.red : C.brass);
+    // letters B A N K (stylised)
+    const signC = insane ? C.sun : C.ink;
+    r(32, 6, 2, 2, signC);
+    r(36, 6, 2, 2, signC);
+    r(40, 6, 2, 2, signC);
+    r(44, 6, 2, 2, signC);
+    r(33, 6.5, 0.5, 1, insane ? C.red : C.brass);
+    r(37, 6.5, 0.5, 1, insane ? C.red : C.brass);
+    r(41, 6.5, 0.5, 1, insane ? C.red : C.brass);
+    r(45, 6.5, 0.5, 1, insane ? C.red : C.brass);
+    // double doors (dark stained)
+    r(34, 32, 12, 20, insane ? C.ink : C.woodD);
+    r(34, 32, 12, 1, C.ink);
+    r(34, 32, 1, 20, C.ink);
+    r(45, 32, 1, 20, C.ink);
+    r(39.5, 32, 1, 20, C.ink); // center join
+    // glass panes on doors
+    r(36, 34, 3, 8, insane ? C.redD : C.blueL);
+    r(41, 34, 3, 8, insane ? C.redD : C.blueL);
+    // brass handles
+    r(38, 42, 0.5, 1, C.brass);
+    r(41.5, 42, 0.5, 1, C.brass);
+    // dollar sign above door
+    r(38, 28, 4, 3, insane ? C.red : C.grass);
+    r(39, 27, 2, 5, insane ? C.red : C.grass);
+    // steps
+    r(28, 52, 24, 2, insane ? C.ink : C.stone);
+    r(26, 54, 28, 2, insane ? C.ink : C.stoneD);
+}
+
+/**
+ * Insane-mode bank: a blood-stained demonic keep. Same 80×60 footprint so the
+ * door trigger (at sprite centre) still lines up with the portcullis.
+ */
+function paintBankInsane(ctx) {
+    const r = R(ctx);
+    // Scorched ground shadow
+    r(0, 58, 80, 2, C.ink);
+    // Stone plinth
+    r(0, 52, 80, 6, C.ink2);
+    r(0, 52, 80, 1, C.ink);
+    // Main curtain wall — dark mottled stone
+    r(4, 14, 72, 38, C.stoneD);
+    for (let y = 18; y < 52; y += 4) r(4, y, 72, 1, C.ink);
+    r(4, 14, 72, 1, C.ink);
+    r(4, 14, 1, 38, C.ink);
+    r(75, 14, 1, 38, C.ink);
+    // Corner spires (tall, pointed)
+    for (const tx of [2, 72]) {
+        r(tx, 6, 6, 10, C.stoneD);
+        r(tx, 6, 6, 1, C.ink);
+        r(tx, 15, 6, 1, C.ink);
+        r(tx + 2, 2, 2, 4, C.stoneD);
+        r(tx + 2.5, 0, 1, 2, C.ink);        // needle tip
+    }
+    // Crenellated battlements across the roof
+    r(8, 10, 64, 4, C.stoneD);
+    r(8, 10, 64, 1, C.ink);
+    for (let bx = 8; bx < 72; bx += 6) {
+        r(bx, 6, 4, 4, C.stoneD);
+        r(bx, 6, 4, 1, C.ink);
+    }
+    // Narrow arrow-slit windows (no glass — just darkness with a glow)
+    for (const wx of [14, 30, 50, 66]) {
+        r(wx, 22, 2, 10, C.ink);
+        r(wx + 0.5, 24, 1, 6, C.redD);      // fiery glow inside
+        r(wx + 0.5, 26, 1, 2, C.red);
+        // arched stone surround
+        r(wx - 1, 21, 4, 1, C.stoneD);
+        r(wx - 1, 21, 4, 0.5, C.ink);
+    }
+    // Iron portcullis doorway at centre
+    r(32, 24, 16, 28, C.ink);               // dark entry
+    r(32, 24, 16, 1, C.gunD);
+    // Vertical iron bars
+    for (let bx = 33; bx < 48; bx += 3) {
+        r(bx, 24, 1, 28, C.steelD);
+        r(bx + 0.5, 24, 0.5, 28, C.ink);
+    }
+    // Horizontal cross-bars
+    for (const by of [30, 38, 46]) {
+        r(32, by, 16, 1, C.steelD);
+        r(32, by, 16, 0.5, C.ink);
+    }
+    // Iron chains at the top of the portcullis
+    r(36, 20, 2, 4, C.steelD);
+    r(42, 20, 2, 4, C.steelD);
+    r(36, 20, 2, 0.5, C.steel);
+    r(42, 20, 2, 0.5, C.steel);
+    // Skull carved above the entrance (replaces dollar sign)
+    r(37, 15, 6, 5, C.whiteD);
+    r(37, 15, 6, 1, C.white);
+    r(38, 17, 1, 1, C.ink);                  // eye socket L
+    r(41, 17, 1, 1, C.ink);                  // eye socket R
+    r(39, 18, 2, 1, C.ink);                  // nose hole
+    r(38, 19, 4, 0.5, C.ink);                // jaw line
+    r(38.5, 19.5, 0.5, 0.5, C.ink);          // teeth gaps
+    r(39.5, 19.5, 0.5, 0.5, C.ink);
+    r(40.5, 19.5, 0.5, 0.5, C.ink);
+    // Torch brackets flanking the door (red-glowing)
+    for (const tx of [26, 51]) {
+        r(tx, 28, 2, 8, C.woodD);            // bracket shaft
+        r(tx - 1, 26, 4, 2, C.red);          // flame base
+        r(tx, 24, 2, 2, C.sun);              // flame core
+        r(tx + 0.5, 22, 1, 2, C.sunD);       // rising tip
+    }
+    // Blood drip streaks down the walls
+    for (const [bx, by, bh] of [[16, 18, 6], [54, 20, 8], [68, 26, 5]]) {
+        r(bx, by, 1, bh, C.blood);
+        r(bx - 0.5, by + bh, 1, 1, C.blood);
+    }
+    // Bone piles at the base
+    r(26, 48, 3, 4, C.white);
+    r(26, 48, 3, 1, C.whiteD);
+    r(51, 48, 3, 4, C.white);
+    r(51, 48, 3, 1, C.whiteD);
+    r(51, 50, 1, 2, C.ink);
+    r(27, 50, 1, 2, C.ink);
+    // Bottom steps eroded into broken slabs
+    r(28, 52, 24, 2, C.ink);
+    r(26, 54, 28, 2, C.stoneD);
+    r(26, 54, 28, 0.5, C.ink);
+}
+
+// ---------- GUN SHOP (storefront) -------------------------------------------
+
+function paintGunShop(ctx, insane = false) {
+    const r = R(ctx);
+    const wall = insane ? C.ink2 : C.wood;
+    const wallS = insane ? C.ink : C.woodD;
+    const roof = insane ? C.ink : C.redD;
+    // native 72x56
+    r(0, 54, 72, 2, insane ? C.ink : C.grassD);
+    // store wall
+    r(2, 14, 68, 38, wall);
+    r(2, 14, 68, 1, wallS);
+    r(2, 51, 68, 1, C.ink);
+    r(2, 14, 1, 38, wallS);
+    r(69, 14, 1, 38, wallS);
+    // flat awning
+    r(0, 10, 72, 4, roof);
+    r(0, 10, 72, 1, insane ? C.redD : C.red);
+    r(0, 13, 72, 1, C.ink);
+    // awning stripes
+    for (let sx = 2; sx < 72; sx += 6) {
+        r(sx, 10, 3, 3, insane ? C.ink : C.redL);
+    }
+    // "GUNS" sign
+    r(20, 4, 32, 6, insane ? C.black : C.gunD);
+    r(20, 4, 32, 1, insane ? C.red : C.steel);
+    const lblC = insane ? C.red : C.sun;
+    // G U N S simplified
+    for (let i = 0; i < 4; i++) {
+        const lx = 24 + i * 6;
+        r(lx, 6, 4, 3, lblC);
+    }
+    // big window showing weapons
+    r(6, 18, 26, 18, insane ? C.redD : C.sky);
+    r(6, 18, 26, 1, C.ink);
+    r(6, 35, 26, 1, C.ink);
+    r(6, 18, 1, 18, C.ink);
+    r(31, 18, 1, 18, C.ink);
+    r(18.5, 18, 0.5, 18, C.ink); // mullion
+    r(6, 26.5, 26, 0.5, C.ink);
+    // rifle silhouettes in the window
+    r(8, 22, 8, 1, C.gun);
+    r(15, 21, 1, 2, C.woodD);
+    r(20, 30, 10, 1, C.gun);
+    r(29, 29, 1, 2, C.woodD);
+    // door (right side)
+    r(38, 24, 14, 28, insane ? C.ink : C.woodD);
+    r(38, 24, 14, 1, C.ink);
+    r(38, 24, 1, 28, C.ink);
+    r(51, 24, 1, 28, C.ink);
+    r(44.5, 24, 1, 28, C.ink);
+    // door glass
+    r(40, 27, 5, 10, insane ? C.redD : C.blueL);
+    r(46, 27, 5, 10, insane ? C.redD : C.blueL);
+    r(42, 43, 0.5, 1, C.brass);
+    r(47.5, 43, 0.5, 1, C.brass);
+    // OPEN sign
+    r(56, 28, 10, 3, insane ? C.red : C.blueD);
+    r(57, 28.5, 8, 2, insane ? C.sun : C.white);
+}
+
+/**
+ * Insane-mode gun shop: a bone-ribbed war armory with hanging skulls and a
+ * glowing forge inside. Same 72×56 footprint; door still at GUN_DOOR_X.
+ */
+function paintGunShopInsane(ctx) {
+    const r = R(ctx);
+    r(0, 54, 72, 2, C.ink);
+    // Wall made of blackened timber + bone ribs (scaffolding)
+    r(2, 14, 68, 38, C.ink2);
+    r(2, 14, 68, 1, C.ink);
+    r(2, 51, 68, 1, C.ink);
+    r(2, 14, 1, 38, C.ink);
+    r(69, 14, 1, 38, C.ink);
+    // Curving rib bones mounted on the wall face
+    for (const rx of [8, 22, 36, 50, 62]) {
+        r(rx, 18, 1, 30, C.whiteD);
+        r(rx, 18, 1, 0.5, C.white);
+        // little side hooks on each rib
+        r(rx - 1, 24, 1, 0.5, C.whiteD);
+        r(rx + 1, 32, 1, 0.5, C.whiteD);
+        r(rx - 1, 40, 1, 0.5, C.whiteD);
+    }
+    // Jagged, tattered awning — torn black cloth with red drips
+    r(0, 10, 72, 4, C.black);
+    r(0, 10, 72, 1, C.ink);
+    for (let sx = 0; sx < 72; sx += 4) {
+        r(sx, 13, 2, 2, C.ink);             // torn edge
+        r(sx + 1, 14, 1, 1, C.blood);       // drip
+    }
+    // Warped blood-red banner instead of the "GUNS" sign
+    r(18, 2, 36, 8, C.redD);
+    r(18, 2, 36, 1, C.red);
+    r(18, 9, 36, 1, C.ink);
+    // Sigil centre — crossed axes
+    r(28, 4, 2, 4, C.steel);
+    r(28, 3.5, 2, 0.5, C.white);
+    r(42, 4, 2, 4, C.steel);
+    r(26, 4, 2, 1, C.gunD);                 // axe heads L
+    r(44, 4, 2, 1, C.gunD);                 // axe heads R
+    r(34, 4, 4, 3, C.red);                  // central glowing rune
+    r(35, 5, 2, 1, C.sun);
+    // Forge window — glowing hellfire inside
+    r(6, 18, 26, 18, C.black);
+    r(6, 18, 26, 1, C.ink);
+    r(6, 35, 26, 1, C.ink);
+    r(6, 18, 1, 18, C.ink);
+    r(31, 18, 1, 18, C.ink);
+    r(8, 26, 22, 8, C.redD);                // forge glow
+    r(10, 28, 18, 4, C.red);                // hotter inner
+    r(12, 30, 14, 2, C.sun);                // brightest core
+    r(14, 31, 10, 1, C.white);
+    // Anvil silhouette in the forge
+    r(16, 32, 8, 2, C.ink);
+    r(14, 34, 12, 1, C.ink);
+    // Severed heads on iron spikes lining the window top
+    for (const hx of [10, 18, 26]) {
+        r(hx, 16, 1, 2, C.steelD);           // spike shaft
+        r(hx - 1, 14, 3, 2, C.skin);         // head
+        r(hx, 15, 1, 0.5, C.ink);            // eye
+        r(hx, 16, 1, 0.5, C.blood);          // neck blood
+    }
+    // Iron-banded door (right side) with spikes
+    r(38, 24, 14, 28, C.ink);
+    r(38, 24, 14, 1, C.ink);
+    r(38, 24, 1, 28, C.gunD);
+    r(51, 24, 1, 28, C.gunD);
+    // Horizontal iron bands
+    for (const by of [28, 36, 44]) {
+        r(38, by, 14, 1, C.steelD);
+        r(38, by, 14, 0.5, C.steel);
+    }
+    // Spiked studs on the door
+    for (const [sx, sy] of [[41, 30], [48, 30], [41, 38], [48, 38], [41, 46], [48, 46]]) {
+        r(sx, sy, 1, 1, C.steel);
+        r(sx + 0.5, sy - 0.5, 0.5, 0.5, C.white);
+    }
+    // Heavy iron ring handle
+    r(44, 38, 2, 2, C.steelD);
+    r(44, 38, 2, 0.5, C.steel);
+    // Hanging chain + skull trophy over the door
+    r(43, 20, 2, 4, C.steelD);
+    r(42, 14, 4, 5, C.whiteD);               // trophy skull
+    r(43, 16, 1, 1, C.ink);
+    r(44, 16, 1, 1, C.ink);
+    r(43, 18, 2, 0.5, C.ink);
+}
+
+// ---------- POOL (double-door building) ------------------------------------
+
+function paintPool(ctx, insane = false) {
+    const r = R(ctx);
+    const wall = insane ? C.stoneD : C.sky;
+    const wallS = insane ? C.ink : C.skyD;
+    const roof = insane ? C.ink : C.blueD;
+    // native 100x54
+    r(0, 52, 100, 2, insane ? C.ink : C.grassD);
+    r(2, 14, 96, 38, wall);
+    r(2, 14, 96, 1, wallS);
+    r(2, 51, 96, 1, C.ink);
+    r(2, 14, 1, 38, wallS);
+    r(97, 14, 1, 38, wallS);
+    // clapboard lines
+    for (let y = 18; y < 50; y += 4) r(2, y, 96, 0.5, wallS);
+    // roof
+    r(0, 10, 100, 4, roof);
+    r(0, 10, 100, 1, insane ? C.redD : C.blue);
+    r(0, 13, 100, 1, C.ink);
+    // big sign
+    r(30, 2, 40, 8, insane ? C.ink : C.blueD);
+    r(30, 2, 40, 1, insane ? C.red : C.blueL);
+    // "POOL" letters
+    const signC = insane ? C.sun : C.white;
+    for (let i = 0; i < 4; i++) {
+        const lx = 34 + i * 8;
+        // In insane mode, letters become warped blobs
+        if (insane) {
+            r(lx, 4, 5, 4, C.red);
+            r(lx + 1, 3, 3, 1, C.sun);
+        } else {
+            r(lx, 4, 5, 4, signC);
+        }
+    }
+    // Two doors — men's on left, ladies' on right
+    // Door frame (stone arches)
+    for (const dx of [18, 60]) {
+        r(dx, 22, 22, 30, insane ? C.stoneD : C.stoneD);
+        r(dx, 22, 22, 1, C.ink);
+        r(dx, 51, 22, 1, C.ink);
+        r(dx, 22, 1, 30, C.ink);
+        r(dx + 21, 22, 1, 30, C.ink);
+        // door itself
+        r(dx + 3, 26, 16, 26, insane ? C.ink : C.woodD);
+        r(dx + 3, 26, 16, 1, C.ink);
+        r(dx + 3, 26, 1, 26, C.ink);
+        r(dx + 18, 26, 1, 26, C.ink);
+        r(dx + 10.5, 26, 1, 26, C.ink);
+        // glass pane
+        r(dx + 5, 30, 5, 8, insane ? C.redD : C.blueL);
+        r(dx + 12, 30, 5, 8, insane ? C.redD : C.blueL);
+        r(dx + 7, 42, 0.5, 1, C.brass);
+        r(dx + 14, 42, 0.5, 1, C.brass);
+    }
+    // Left (men's) pictogram — stick figure
+    if (!insane) {
+        r(27, 16, 4, 4, C.white); // head
+        r(28, 20, 2, 4, C.white); // body
+        r(26, 21, 2, 1, C.white); // arms
+        r(31, 21, 2, 1, C.white);
+    } else {
+        // Warped unreadable blob
+        r(26, 16, 6, 8, C.red);
+        r(28, 14, 2, 2, C.sun);
+        r(25, 18, 1, 2, C.sun);
+    }
+    // Right (women's) pictogram — dress silhouette
+    if (!insane) {
+        r(70, 16, 4, 3, C.white); // head
+        r(68, 19, 8, 5, C.white); // triangular dress
+        r(70, 19, 4, 1, C.white);
+    } else {
+        // Warped unreadable blob — DELIBERATELY look identical to the other
+        r(68, 16, 6, 8, C.red);
+        r(70, 14, 2, 2, C.sun);
+        r(75, 18, 1, 2, C.sun);
+    }
+}
+
+/**
+ * Insane-mode pool: a pair of identical dungeon portals in a slimy catacomb
+ * wall. The two doors are painted deliberately identical so the player can't
+ * tell which one leads where. Same 100×54 footprint so door centres still
+ * land at POOL_MENS_X (native 29) and POOL_WOMENS_X (native 71).
+ */
+function paintPoolInsane(ctx) {
+    const r = R(ctx);
+    r(0, 52, 100, 2, C.ink);
+    // Mossy catacomb wall — dark green-black stone
+    r(2, 14, 96, 38, C.grayD);
+    r(2, 14, 96, 1, C.ink);
+    r(2, 51, 96, 1, C.ink);
+    r(2, 14, 1, 38, C.ink);
+    r(97, 14, 1, 38, C.ink);
+    // Stone-block seams
+    for (let y = 20; y < 50; y += 6) {
+        r(2, y, 96, 0.5, C.ink);
+        for (let x = 6; x < 96; x += 10) r(x, y - 6, 0.5, 6, C.ink);
+    }
+    // Mossy slime dripping from the top
+    for (const [mx, mw] of [[6, 10], [30, 12], [56, 10], [80, 14]]) {
+        r(mx, 14, mw, 3, C.leafD);
+        r(mx, 16, mw, 1, C.grassD);
+        // drip points
+        r(mx + 2, 17, 1, 2, C.leafD);
+        r(mx + mw - 3, 17, 1, 3, C.leafD);
+    }
+    // Jagged archway spanning the whole front — like a cave mouth
+    r(0, 10, 100, 4, C.ink);
+    for (let jx = 0; jx < 100; jx += 6) {
+        r(jx, 14, 3, 2, C.ink);             // stalactite fangs
+        r(jx + 1, 16, 1, 2, C.ink);
+    }
+    // Warped sign — looks like scorched glyphs, unreadable
+    r(30, 2, 40, 8, C.black);
+    r(30, 2, 40, 1, C.redD);
+    for (const gx of [34, 42, 50, 58]) {
+        r(gx, 4, 5, 4, C.red);              // glyph blob
+        r(gx + 1, 3, 3, 1, C.sun);          // fiery tip
+        r(gx + 2, 6, 1, 1, C.blood);
+    }
+    // Two IDENTICAL dungeon portals — same paint, positioned at the two doors.
+    // Door centres at native x=29 (men's) and x=71 (women's). Each door is
+    // 22 wide; the painted portal uses dx as the frame's left edge.
+    function paintPortal(dx) {
+        // Stone-arch frame
+        r(dx, 20, 22, 32, C.stoneD);
+        r(dx, 20, 22, 1, C.ink);
+        r(dx, 51, 22, 1, C.ink);
+        r(dx, 20, 1, 32, C.ink);
+        r(dx + 21, 20, 1, 32, C.ink);
+        // Archway top (rounded via stepping)
+        r(dx + 2, 18, 18, 2, C.stoneD);
+        r(dx + 4, 16, 14, 2, C.stoneD);
+        r(dx + 2, 18, 18, 0.5, C.ink);
+        // Black doorway interior (void)
+        r(dx + 3, 22, 16, 28, C.black);
+        r(dx + 3, 22, 16, 1, C.ink);
+        // Iron door with horizontal bands
+        r(dx + 4, 24, 14, 26, C.ink2);
+        r(dx + 4, 24, 14, 1, C.gunD);
+        for (const by of [28, 36, 44]) {
+            r(dx + 4, by, 14, 1, C.steelD);
+        }
+        // Centre iron ring handle
+        r(dx + 10, 36, 2, 2, C.steelD);
+        r(dx + 10, 36, 2, 0.5, C.steel);
+        // Demon face carved into the lintel — both portals share the exact
+        // same demon so the player can't distinguish them.
+        r(dx + 8, 14, 6, 4, C.redD);
+        r(dx + 9, 15, 1, 1, C.sun);         // eye L
+        r(dx + 12, 15, 1, 1, C.sun);        // eye R
+        r(dx + 9, 15, 0.5, 0.5, C.white);
+        r(dx + 12, 15, 0.5, 0.5, C.white);
+        r(dx + 10, 16, 2, 1, C.ink);        // jagged mouth
+        // Twin horns
+        r(dx + 7, 12, 1, 2, C.ink);
+        r(dx + 14, 12, 1, 2, C.ink);
+        // Blood drip from the demon mouth
+        r(dx + 10, 17, 1, 2, C.blood);
+    }
+    paintPortal(18);   // men's door frame left edge
+    paintPortal(60);   // women's door frame left edge
+    // Chains hanging between the portals
+    for (const cx of [42, 48, 54]) {
+        r(cx, 16, 1, 14, C.steelD);
+        for (let cy = 17; cy < 30; cy += 3) r(cx - 0.5, cy, 2, 1, C.steelD);
+    }
+    // Pooled blood at the base between the doors
+    r(40, 50, 20, 2, C.blood);
+    r(40, 51, 20, 1, C.redD);
+}
+
+// ---------- CHURCH INTERIOR (stained glass, pews, altar) -------------------
+
+function paintChurchAltar(ctx) {
+    const r = R(ctx);
+    // native 36x40 — altar table with draped cloth + large cross
+    // wooden base
+    r(0, 20, 36, 20, C.woodD);
+    r(0, 20, 36, 1, C.wood);
+    // cloth drape
+    r(2, 18, 32, 12, C.white);
+    r(2, 18, 32, 1, C.whiteD);
+    // purple trim
+    r(2, 28, 32, 2, C.purple);
+    r(2, 28, 32, 0.5, C.purpleD);
+    // big gold cross behind
+    r(16, 0, 4, 18, C.brass);
+    r(16, 0, 4, 1, C.sun);
+    r(10, 6, 16, 3, C.brass);
+    r(10, 6, 16, 1, C.sun);
+    // candles either side
+    r(4, 14, 2, 6, C.white);
+    r(30, 14, 2, 6, C.white);
+    r(4.5, 12, 1, 2, C.sun);
+    r(30.5, 12, 1, 2, C.sun);
+}
+
+function paintChurchPew(ctx) {
+    const r = R(ctx);
+    // native 48x14 — wooden pew row
+    r(0, 2, 48, 6, C.wood);
+    r(0, 2, 48, 1, C.woodD);
+    r(0, 7, 48, 1, C.woodD);
+    // backrest
+    r(0, 0, 48, 3, C.woodD);
+    r(0, 0, 48, 1, C.ink);
+    // legs
+    r(2, 8, 2, 6, C.woodD);
+    r(44, 8, 2, 6, C.woodD);
+}
+
+function paintStainedGlass(ctx) {
+    const r = R(ctx);
+    // native 28x56 — tall lancet window, elaborate pattern
+    // stone frame
+    r(0, 0, 28, 56, C.stoneD);
+    r(2, 4, 24, 50, C.ink);
+    // colored panes
+    r(3, 5, 22, 48, C.blue);
+    r(4, 6, 20, 4, C.red);
+    r(4, 11, 20, 3, C.sun);
+    r(4, 15, 20, 4, C.grass);
+    r(4, 20, 20, 4, C.purple);
+    r(4, 25, 20, 3, C.redL);
+    r(4, 29, 20, 4, C.blueL);
+    r(4, 34, 20, 4, C.sun);
+    r(4, 39, 20, 4, C.grass);
+    r(4, 44, 20, 8, C.red);
+    // mullions
+    r(13.5, 5, 0.5, 48, C.ink);
+    for (let y = 9; y < 52; y += 5) r(3, y, 22, 0.5, C.ink);
+    // arched top
+    r(10, 2, 8, 2, C.stoneD);
+}
+
+// ---------- ENVIRONMENTAL HAZARDS ------------------------------------------
+
+function paintHole(ctx) {
+    const r = R(ctx);
+    // native 48x16 — dark pit in the ground
+    // light rim
+    r(0, 0, 48, 2, C.woodD);
+    r(0, 0, 48, 1, C.wood);
+    // dark interior
+    r(2, 2, 44, 14, C.ink);
+    r(4, 4, 40, 10, C.black);
+    // jagged edge
+    r(6, 1, 2, 1, C.ink);
+    r(14, 1, 2, 1, C.ink);
+    r(22, 1, 2, 1, C.ink);
+    r(30, 1, 2, 1, C.ink);
+    r(38, 1, 2, 1, C.ink);
+    // depth streaks
+    r(10, 6, 1, 6, C.grayD);
+    r(24, 7, 1, 5, C.grayD);
+    r(36, 5, 1, 7, C.grayD);
+}
+
+/**
+ * Insane-mode fence: a palisade of impaled bone spikes with blood drips.
+ * Same 24×30 footprint.
+ */
+function paintFenceInsane(ctx) {
+    const r = R(ctx);
+    // Dark iron horizontal rails (rusted)
+    r(0, 12, 24, 1, C.ink);
+    r(0, 20, 24, 1, C.ink);
+    r(0, 12, 24, 0.25, C.steelD);
+    r(0, 20, 24, 0.25, C.steelD);
+    // Bone pickets (4 across) — impaled upward with a skull on top of one
+    for (const [px, hasSkull] of [[1, false], [7, true], [13, false], [19, false]]) {
+        // Bone shaft (off-white with shadow on one side)
+        r(px, 6, 2, 22, C.whiteD);
+        r(px, 6, 1, 22, C.white);
+        r(px, 6, 2, 0.5, C.ink);
+        r(px, 27, 2, 0.5, C.ink);
+        // Bone knob at bottom (joint)
+        r(px - 0.5, 26, 3, 2, C.whiteD);
+        r(px - 0.5, 26, 3, 0.5, C.white);
+        // Spiked sharpened tip
+        r(px + 0.5, 2, 1, 4, C.whiteD);
+        r(px + 0.5, 0, 1, 2, C.white);
+        r(px + 0.5, 0, 0.5, 4, C.ink);
+        // Blood dripping down
+        r(px + 0.5, 7, 0.5, 3, C.blood);
+        if (hasSkull) {
+            // Skull impaled on top
+            r(px - 1, 2, 4, 4, C.whiteD);
+            r(px - 1, 2, 4, 0.5, C.white);
+            r(px - 0.5, 3, 0.5, 0.5, C.ink);
+            r(px + 1.5, 3, 0.5, 0.5, C.ink);
+            r(px + 0.5, 4, 1, 0.5, C.ink);
+            r(px - 0.5, 5, 3, 0.5, C.ink);
+            // Tip pokes out of the top of the skull
+            r(px + 0.5, 0, 1, 2, C.white);
+        }
+    }
+    // Blood pooling at the base
+    r(0, 28, 24, 2, C.blood);
+    r(0, 29, 24, 0.5, C.redD);
+}
+
+function paintFence(ctx) {
+    const r = R(ctx);
+    // native 24x28 — spiked metal fence section
+    // horizontal rails
+    r(0, 10, 24, 2, C.steelD);
+    r(0, 22, 24, 2, C.steelD);
+    r(0, 10, 24, 0.5, C.steel);
+    r(0, 22, 24, 0.5, C.steel);
+    // vertical pickets with spiked tops
+    for (const px of [1, 7, 13, 19]) {
+        r(px, 6, 2, 22, C.steelD);
+        r(px, 6, 1, 22, C.steel);
+        // spike tip
+        r(px, 2, 2, 4, C.steelD);
+        r(px + 0.5, 0, 1, 2, C.steelD);
+        r(px + 0.5, 0, 0.5, 4, C.ink);
+    }
+    // base
+    r(0, 28, 24, 2, C.grayD);
+}
+
+/**
+ * Insane-mode bramble: razor wire tangle with barbs, rust, and fresh blood.
+ * Same 30×26 footprint so the obstacle trigger box still matches.
+ */
+function paintBrambleInsane(ctx) {
+    const r = R(ctx);
+    // Dark ground shadow
+    r(0, 24, 30, 2, C.ink);
+    // Short iron stakes holding the wire up
+    for (const sx of [2, 28]) {
+        r(sx, 10, 2, 14, C.steelD);
+        r(sx, 10, 2, 1, C.steel);
+        r(sx, 23, 2, 1, C.ink);
+    }
+    // Three coiling strands of razor wire, each with barbs
+    const strands = [
+        { y: 10, amp: 2 },
+        { y: 15, amp: 3 },
+        { y: 20, amp: 2 },
+    ];
+    for (const { y, amp } of strands) {
+        // Main strand — drawn as a dotted path for a twisted look
+        for (let x = 2; x < 28; x += 1) {
+            const wob = Math.round(Math.sin(x * 1.3) * amp) * 0.5;
+            r(x, y + wob, 1, 0.5, C.steelD);
+            r(x, y + wob, 1, 0.25, C.steel);
+        }
+        // Barbs every 5 px: little diagonal spikes
+        for (let x = 4; x < 28; x += 5) {
+            const wob = Math.round(Math.sin(x * 1.3) * amp) * 0.5;
+            // star-shape barb
+            r(x - 0.5, y + wob - 1.5, 0.5, 1, C.ink);    // up spike
+            r(x,       y + wob - 2,   0.5, 2, C.steelD); // up core
+            r(x + 0.5, y + wob - 0.5, 0.5, 1, C.ink);    // side
+            r(x - 1,   y + wob,       1,   0.5, C.ink);
+            r(x,       y + wob + 1,   0.5, 1, C.ink);    // down
+        }
+    }
+    // Rusty twisted wire knots
+    r(12, 12, 2, 2, C.boot);
+    r(13, 13, 1, 1, C.bootD);
+    r(18, 17, 2, 2, C.boot);
+    r(19, 17, 1, 1, C.bootD);
+    // Fresh blood spots from prior victims
+    r(6, 12, 1, 1, C.blood);
+    r(15, 16, 1, 1, C.blood);
+    r(22, 11, 1, 1, C.blood);
+    r(10, 19, 1, 1, C.blood);
+    r(24, 20, 1, 1, C.blood);
+    // A torn scrap of bloody fabric caught on the wire
+    r(16, 20, 4, 2, C.redD);
+    r(16, 20, 4, 0.5, C.red);
+    r(17, 21, 1, 1, C.ink);
+    // Small skull at the base — someone really tried
+    r(5, 20, 4, 4, C.whiteD);
+    r(5, 20, 4, 1, C.white);
+    r(6, 22, 0.5, 0.5, C.ink);
+    r(7, 22, 0.5, 0.5, C.ink);
+    r(6, 23, 2, 0.5, C.ink);
+}
+
+function paintBramble(ctx) {
+    const r = R(ctx);
+    // native 30x26 — thorny rose/bramble bush
+    // dark leafy mass
+    r(2, 8, 26, 18, C.leafD);
+    r(0, 12, 30, 12, C.leafD);
+    r(4, 6, 22, 4, C.leaf);
+    r(6, 4, 18, 3, C.leafD);
+    // highlight clumps
+    r(8, 10, 3, 2, C.grassD);
+    r(18, 13, 3, 2, C.grassD);
+    r(12, 18, 3, 2, C.grassD);
+    // red blood drops from thorns
+    r(3, 7, 1, 1, C.red);
+    r(15, 5, 1, 1, C.red);
+    r(22, 9, 1, 1, C.red);
+    r(9, 14, 1, 1, C.red);
+    r(25, 16, 1, 1, C.red);
+    // thorns (black diagonal dots)
+    for (const [tx, ty] of [[4, 10], [10, 6], [16, 11], [22, 7], [14, 14], [20, 18], [6, 20], [26, 12]]) {
+        r(tx, ty, 1, 1, C.ink);
+        r(tx + 0.5, ty - 0.5, 0.5, 0.5, C.ink);
+    }
+}
+
+// ---------- TOWEL WOMAN (pool patron) --------------------------------------
+
+function paintTowelWoman(ctx, frame, evil = false) {
+    const r = R(ctx);
+    // native 16x24 — person in white towel wrap, wet blond hair
+    // wet hair
+    const hair = evil ? C.redD : C.blond;
+    r(3, 0, 10, 4, hair);
+    r(3, 0, 10, 1, C.khakiD);
+    r(3, 4, 1, 2, hair);
+    r(12, 4, 1, 2, hair);
+    // hair drips
+    r(2, 4, 0.5, 1, C.sky);
+    r(13, 4, 0.5, 1, C.sky);
+    // face
+    r(4, 4, 8, 5, C.skin);
+    r(4, 4, 1, 5, C.skinS);
+    r(11, 4, 1, 5, C.skinS);
+    // eyes
+    if (evil) {
+        r(5, 5, 2, 2, C.red);
+        r(9, 5, 2, 2, C.red);
+        r(5, 5, 1, 1, C.sun);
+        r(9, 5, 1, 1, C.sun);
+    } else {
+        r(5, 5, 2, 1.5, C.ink);
+        r(9, 5, 2, 1.5, C.ink);
+        r(5.5, 5.5, 1, 0.5, C.blueL);
+        r(9.5, 5.5, 1, 0.5, C.blueL);
+    }
+    // nose
+    r(7, 6.5, 1, 1, C.skinS);
+    // mouth
+    r(6, 8, 3, 1, evil ? C.blood : C.mouth);
+    // neck
+    r(7, 9, 2, 1, C.skinS);
+    // towel top (across chest)
+    r(2, 10, 12, 2, C.white);
+    r(2, 10, 12, 1, C.whiteD);
+    r(2, 10, 1, 2, C.whiteD);
+    r(13, 10, 1, 2, C.whiteD);
+    // towel body (long wrap to knees)
+    r(2, 12, 12, 11, C.white);
+    r(2, 12, 1, 11, C.whiteD);
+    r(13, 12, 1, 11, C.whiteD);
+    // fold line
+    r(7.5, 12, 1, 11, C.whiteD);
+    // blue stripe near hem
+    r(2, 20, 12, 1, C.blueL);
+    // shoulders (skin peeking out)
+    r(1, 10, 1, 2, C.skin);
+    r(14, 10, 1, 2, C.skin);
+    // arms — hidden except hands
+    if (frame === 'walk1') {
+        r(1, 12, 2, 4, C.skin);
+        r(14, 13, 2, 4, C.skin);
+        r(1, 15, 2, 1, C.skinS);
+        r(14, 16, 2, 1, C.skinS);
+    } else if (frame === 'walk2') {
+        r(1, 13, 2, 4, C.skin);
+        r(14, 12, 2, 4, C.skin);
+        r(1, 16, 2, 1, C.skinS);
+        r(14, 15, 2, 1, C.skinS);
+    } else {
+        r(1, 13, 2, 4, C.skin);
+        r(14, 13, 2, 4, C.skin);
+        r(1, 16, 2, 1, C.skinS);
+        r(14, 16, 2, 1, C.skinS);
+    }
+    // bare feet
+    r(3, 23, 4, 1, C.skin);
+    r(9, 23, 4, 1, C.skin);
+    r(3, 23, 4, 0.5, C.skinS);
+    r(9, 23, 4, 0.5, C.skinS);
+    // water drip trail
+    r(7, 23.5, 0.5, 0.5, C.sky);
+    r(10, 23.5, 0.5, 0.5, C.sky);
+}
+
+// ---------- POLICE CAR (end cinematic) -------------------------------------
+
+function paintPoliceCar(ctx, lightOn = true) {
+    const r = R(ctx);
+    // native 40x18 — cruiser silhouette
+    // body
+    r(2, 8, 36, 7, C.white);
+    r(2, 8, 36, 1, C.whiteD);
+    r(2, 14, 36, 1, C.ink);
+    r(2, 8, 1, 7, C.whiteD);
+    r(37, 8, 1, 7, C.grayD);
+    // roof / cabin
+    r(10, 3, 20, 5, C.white);
+    r(10, 3, 20, 1, C.whiteD);
+    r(10, 7, 20, 1, C.ink);
+    // windows
+    r(11, 4, 8, 3, C.sky);
+    r(21, 4, 8, 3, C.sky);
+    r(19, 4, 2, 3, C.white);
+    // door stripe (blue)
+    r(2, 10, 36, 2, C.blueD);
+    r(2, 10, 36, 0.5, C.blueL);
+    // star/shield
+    r(18, 10, 4, 2, C.sun);
+    // wheels
+    r(6, 14, 5, 4, C.ink);
+    r(29, 14, 5, 4, C.ink);
+    r(7, 14.5, 3, 3, C.grayD);
+    r(30, 14.5, 3, 3, C.grayD);
+    // light bar
+    r(14, 1, 4, 2, lightOn ? C.red : C.redD);
+    r(22, 1, 4, 2, lightOn ? C.blue : C.blueD);
+    r(14, 1, 12, 0.5, C.white);
+    // headlight
+    r(37, 11, 1, 1, C.sun);
+}
+
+function paintPoliceCarRed(ctx) { paintPoliceCar(ctx, true); }
+function paintPoliceCarBlue(ctx) {
+    // Same car, light bar alternation — red side dim, blue side lit.
+    const r = R(ctx);
+    paintPoliceCar(ctx);
+    r(14, 1, 4, 2, C.redD);
+    r(22, 1, 4, 2, C.blueL);
+    r(14, 1, 12, 0.5, C.white);
+}
+
+// ---------- SPEECH BUBBLE (drawn at runtime as rect; no sprite needed) -----
+
+// ---------- CORPSE (post-cinematic bodies) ---------------------------------
+
+function paintCorpse(ctx) {
+    const r = R(ctx);
+    // native 24x10 — prone body in red-stained white robe
+    r(0, 6, 24, 4, C.white);
+    r(0, 6, 24, 1, C.whiteD);
+    r(0, 9, 24, 1, C.ink);
+    // head at one end
+    r(2, 3, 4, 5, C.skin);
+    r(2, 3, 4, 1, C.skinS);
+    // hair
+    r(2, 3, 4, 1, C.hair);
+    // blood pool spreading
+    r(0, 9, 24, 1, C.blood);
+    r(2, 10, 20, 1, C.blood);
+    // splats
+    r(6, 7, 3, 1, C.blood);
+    r(14, 7, 4, 1, C.blood);
+    r(19, 6, 3, 1, C.blood);
+}
+
 // ---------- EXPORTED SPRITE MAP --------------------------------------------
 
 /** Builds every sprite. Call once at game boot. */
@@ -1792,6 +2719,37 @@ export function buildSprites() {
     s.church       = sprite(88, 60, paintChurch);
     s.churchInsane = sprite(88, 60, paintChurchInsane);
 
+    // Extra buildings
+    s.bank         = sprite(80, 60, paintBank);
+    s.bankInsane   = sprite(80, 60, paintBankInsane);
+    s.gunShop      = sprite(72, 56, paintGunShop);
+    s.gunShopInsane= sprite(72, 56, paintGunShopInsane);
+    s.pool         = sprite(100, 54, paintPool);
+    s.poolInsane   = sprite(100, 54, paintPoolInsane);
+
+    // Church interior props
+    s.churchAltar  = sprite(36, 40, paintChurchAltar);
+    s.churchPew    = sprite(48, 14, paintChurchPew);
+    s.stainedGlass = sprite(28, 56, paintStainedGlass);
+
+    // Environmental hazards (each with a hellscape variant for insane mode)
+    s.hole           = sprite(48, 16, paintHole);
+    s.fence          = sprite(24, 30, paintFence);
+    s.fenceInsane    = sprite(24, 30, paintFenceInsane);
+    s.bramble        = sprite(30, 26, paintBramble);
+    s.brambleInsane  = sprite(30, 26, paintBrambleInsane);
+
+    // Towel woman (pool lady)
+    s.towelWomanIdle  = sprite(16, 24, (c) => paintTowelWoman(c, 'idle'));
+    s.towelWomanWalk1 = sprite(16, 24, (c) => paintTowelWoman(c, 'walk1'));
+    s.towelWomanWalk2 = sprite(16, 24, (c) => paintTowelWoman(c, 'walk2'));
+    s.towelWomanEvil  = sprite(16, 24, (c) => paintTowelWoman(c, 'idle', true));
+
+    // End cinematic
+    s.policeCar     = sprite(40, 18, paintPoliceCarRed);
+    s.policeCarAlt  = sprite(40, 18, paintPoliceCarBlue);
+    s.corpse        = sprite(24, 11, paintCorpse);
+
     // Pickups (serene + insane variants)
     s.ammo        = sprite(14, 10, paintAmmo);
     s.cap         = sprite(14, 6, paintCap);
@@ -1815,11 +2773,13 @@ export function buildSprites() {
     s.fire  = sprite(24, 16, (c) => paintFire(c, 0));
     s.fire2 = sprite(24, 16, (c) => paintFire(c, 1));
 
-    // Tiles
-    s.ground   = sprite(16, 16, paintGround);
-    s.road     = sprite(16, 16, paintRoad);
-    s.floorInt = sprite(16, 16, paintFloorInt);
-    s.wallInt  = sprite(16, 16, paintWallInt);
+    // Tiles (interior tiles have insane variants for the dungeon look)
+    s.ground         = sprite(16, 16, paintGround);
+    s.road           = sprite(16, 16, paintRoad);
+    s.floorInt       = sprite(16, 16, paintFloorInt);
+    s.floorIntInsane = sprite(16, 16, paintFloorIntInsane);
+    s.wallInt        = sprite(16, 16, paintWallInt);
+    s.wallIntInsane  = sprite(16, 16, paintWallIntInsane);
 
     // Interior furniture
     s.exitDoor = sprite(14, 26, paintExitDoor);

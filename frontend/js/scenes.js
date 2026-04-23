@@ -2211,7 +2211,7 @@ async function endingScene({ stats, player, runTimeMs }) {
             });
             k.add([
                 k.text('score saved — share it or press B for board', { size: 13 }),
-                k.pos(k.width() / 2, k.height() - 54),
+                k.pos(k.width() / 2, peaceful ? k.height() - 28 : k.height() - 54),
                 k.anchor('center'),
                 k.color(100, 220, 120),
             ]);

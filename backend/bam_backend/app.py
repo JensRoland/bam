@@ -73,21 +73,28 @@ def _render_index(
                 f"{clean_name} just hit {clean_score} on BRAVE AMERICA MAN. "
                 "Your turn, champion. 🇺🇸💪"
             )
-        og_image = (
-            f"{site_root}og?s={quote(clean_score, safe=':')}"
+        params = (
+            f"s={quote(clean_score, safe=':')}"
             f"&n={quote(clean_name)}"
             f"&t={'win' if ending == 'win' else 'crime'}"
         )
+        og_image = f"{site_root}og?{params}"
+        # Unique canonical URL per share — Facebook dedupes its OG cache by
+        # og:url, so if every share pointed to site_root the first scrape
+        # would freeze the preview (title/image/description) for all later
+        # shares of the same site.
+        og_url = f"{site_root}?{params}"
     else:
         title = DEFAULT_TITLE
         desc = DEFAULT_DESC
         og_image = site_root + DEFAULT_OG_IMAGE_PATH.lstrip("/")
+        og_url = site_root
 
     return (
         tpl
         .replace("{{og_title}}", html.escape(title, quote=True))
         .replace("{{og_description}}", html.escape(desc, quote=True))
-        .replace("{{og_url}}", html.escape(site_root, quote=True))
+        .replace("{{og_url}}", html.escape(og_url, quote=True))
         .replace("{{og_image}}", html.escape(og_image, quote=True))
         .replace("{{prefix}}", html.escape(URL_PREFIX, quote=True))
     )

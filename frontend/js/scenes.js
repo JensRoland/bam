@@ -1230,30 +1230,31 @@ function buildPlayingContext(opts) {
     }
 
     // ----- HUD (fixed overlay) ---------------------------------------------
-    k.add([k.rect(164, 20), k.pos(12, 12), k.color(20, 20, 20), k.fixed(), k.z(100)]);
-    const hpFill = k.add([k.rect(160, 16), k.pos(14, 14), k.color(211, 47, 47), k.fixed(), k.z(101)]);
+    k.add([k.rect(120, 16), k.pos(12, 12), k.color(20, 20, 20), k.fixed(), k.z(100)]);
+    const hpFill = k.add([k.rect(116, 12), k.pos(14, 14), k.color(211, 47, 47), k.fixed(), k.z(101)]);
     hpFill.onUpdate(() => {
-        hpFill.width = 160 * Math.max(0, player.health / player.maxHealth);
+        hpFill.width = 116 * Math.max(0, player.health / player.maxHealth);
         if (k.time() < player.invulnUntil && Math.floor(k.time() * 8) % 2 === 0) {
             hpFill.color = k.rgb(255, 255, 255);
         } else {
             hpFill.color = k.rgb(211, 47, 47);
         }
     });
-    k.add([k.text('HP', { size: 24 }), k.pos(184, 14), k.fixed(), k.color(255, 255, 255), k.z(101)]);
+    k.add([k.text('HP', { size: 20 }), k.pos(136, 14), k.fixed(), k.color(255, 255, 255), k.z(101)]);
 
     // Intoxication bar — tracks the drunk / high window. Label lies in insane
     // mode: the player thinks it's an "ENERGY" meter, the truth shows through
     // as "INTOX" when serene. Syringe high bumps the bar to full (purple tint).
-    k.add([k.rect(164, 16), k.pos(12, 36), k.color(20, 20, 20), k.fixed(), k.z(100)]);
-    const intoxFill = k.add([k.rect(160, 12), k.pos(14, 38), k.color(230, 120, 20), k.fixed(), k.z(101)]);
+    const INTOX_BAR_X = k.width() - 12 - 120;
+    k.add([k.rect(120, 16), k.pos(INTOX_BAR_X, 12), k.color(20, 20, 20), k.fixed(), k.z(100)]);
+    const intoxFill = k.add([k.rect(116, 12), k.pos(INTOX_BAR_X + 2, 14), k.color(230, 120, 20), k.fixed(), k.z(101)]);
     intoxFill.onUpdate(() => {
-        intoxFill.width = 160 * intoxLevel();
+        intoxFill.width = 116 * intoxLevel();
         intoxFill.color = k.time() < player.rageUntil
             ? k.rgb(160, 60, 220)
             : k.rgb(230, 120, 20);
     });
-    const intoxLabel = k.add([k.text('INTOX', { size: 20 }), k.pos(184, 36), k.fixed(), k.color(255, 255, 255), k.z(101)]);
+    const intoxLabel = k.add([k.text('INTOX', { size: 20 }), k.pos(INTOX_BAR_X - 8, 14), k.anchor('topright'), k.fixed(), k.color(255, 255, 255), k.z(101)]);
     intoxLabel.onUpdate(() => {
         intoxLabel.text = isInsane() ? 'ENERGY' : 'INTOX';
     });
@@ -1299,7 +1300,7 @@ function buildPlayingContext(opts) {
     const SLOT_SIZE = 44;
     const SLOT_GAP = 4;
     const SLOT_BASE_X = 12;
-    const SLOT_BASE_Y = 60;
+    const SLOT_BASE_Y = 210;
     /** @type {any[]} */
     let weaponHudEntities = [];
 
@@ -1398,7 +1399,7 @@ function buildPlayingContext(opts) {
         weaponNameLabel.text = weaponNameMap[wpn] || wpn.toUpperCase();
     });
 
-    const timer = k.add([k.text('0:00', { size: 24 }), k.pos(k.width() - 12, 14), k.anchor('topright'), k.fixed(), k.color(255, 255, 255), k.z(101)]);
+    const timer = k.add([k.text('0:00', { size: 20 }), k.pos(k.width() / 2, 14), k.anchor('top'), k.fixed(), k.color(255, 255, 255), k.z(101)]);
     timer.onUpdate(() => {
         const elapsed = k.time() - run.startTime;
         const m = Math.floor(elapsed / 60);
@@ -1406,7 +1407,7 @@ function buildPlayingContext(opts) {
         timer.text = `${m}:${String(s).padStart(2, '0')}`;
     });
 
-    // Centered below the HUD column so it doesn't collide with HP/INTOX/slots.
+    // Centered below the HP/INTOX bars so it doesn't collide with them.
     const usaFlash = k.add([k.text('', { size: 22 }), k.pos(k.width() / 2, 130), k.anchor('top'), k.fixed(), k.color(255, 255, 255), k.z(101)]);
     usaFlash.onUpdate(() => {
         if (k.time() < player.invulnUntil) {
@@ -1748,7 +1749,7 @@ function gameScene(opts = {}) {
     // default camY=144 now that groundY has doubled to 444).
     p.onUpdate(() => {
         const camX = Math.max(k.width() / 2, Math.min(WORLD.width - k.width() / 2, p.pos.x));
-        k.setCamPos(camX, WORLD.groundY - 78);
+        k.setCamPos(camX, WORLD.groundY - 52);
     });
 
     // ----- Pickups ----------------------------------------------------------
@@ -1918,7 +1919,7 @@ function houseScene() {
         buildPlayingContext({ spawnX: 110, minX: 40, maxX: k.width() - 40 });
 
     // Fixed interior camera — the room fits on one screen.
-    k.setCamPos(k.width() / 2, WORLD.groundY - 78);
+    k.setCamPos(k.width() / 2, WORLD.groundY - 52);
 
     // Inhabitants + the syringe next to the cabinet. Enemies spaced deep
     // in the room so the first hit doesn't knock BAM through the exit.
@@ -1998,7 +1999,7 @@ function debugScene() {
     });
 
     // Fixed camera — the debug arena fits on one screen.
-    k.setCamPos(k.width() / 2, WORLD.groundY - 78);
+    k.setCamPos(k.width() / 2, WORLD.groundY - 52);
 
     const debugKinds = ['dog', 'child', 'father', 'mother', 'scout', 'cop', 'mallCop', 'boss', 'choir', 'swat'];
     const MAX_CONCURRENT = 40;

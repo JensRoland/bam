@@ -1891,31 +1891,32 @@ function houseScene() {
     k.add([k.sprite('cabinet'), k.pos(k.width() - 60, WORLD.groundY + 4), k.anchor('bot'), k.z(-10)]);
     k.add([k.sprite('table'),   k.pos(k.width() / 2 + 20, WORLD.groundY + 4), k.anchor('bot'), k.z(-10)]);
 
-    // Left-side exit door (painted) + invisible trigger in front of it.
-    k.add([k.sprite('exitDoor'), k.pos(60, WORLD.groundY + 4), k.anchor('bot'), k.z(-4)]);
-    k.add([
-        k.rect(40, 88),
-        k.pos(30, WORLD.groundY - 88),
-        k.opacity(0),
-        k.area(),
-        'exit',
-    ]);
-    // Hovering prompt above the door.
+    // Left-side exit door (painted). The player has to press down/s near it
+    // to leave — walking past it shouldn't auto-exit.
+    const EXIT_DOOR_X = 60;
+    k.add([k.sprite('exitDoor'), k.pos(EXIT_DOOR_X, WORLD.groundY + 4), k.anchor('bot'), k.z(-4)]);
+
+    // Hovering prompt above the door, only visible when BAM is close enough
+    // to use it.
     const exitHint = k.add([
-        k.text('← EXIT', { size: 20 }),
-        k.pos(60, WORLD.groundY - 108),
+        k.text('↓ EXIT', { size: 20 }),
+        k.pos(EXIT_DOOR_X, WORLD.groundY - 108),
         k.anchor('center'),
         k.color(255, 240, 80),
+        k.opacity(0),
         k.z(50),
     ]);
+
+    // Shared player context — spawn well clear of the door so the prompt
+    // doesn't pop up immediately on entry.
+    const { p, spawnEnemy, spawnPickup, consumePickup, nearestInteractable } =
+        buildPlayingContext({ spawnX: 140, minX: 40, maxX: k.width() - 40 });
+
     exitHint.onUpdate(() => {
         exitHint.pos.y = WORLD.groundY - 108 + Math.sin(k.time() * 5) * 3;
+        const dx = Math.abs(EXIT_DOOR_X - (p.pos.x + 16));
+        exitHint.opacity = dx < 40 ? 1 : 0;
     });
-
-    // Shared player context — spawn just inside the door so the player
-    // doesn't immediately cross the exit trigger on entry.
-    const { p, spawnEnemy, spawnPickup, consumePickup, nearestInteractable } =
-        buildPlayingContext({ spawnX: 110, minX: 40, maxX: k.width() - 40 });
 
     // Fixed interior camera — the room fits on one screen.
     k.setCamPos(k.width() / 2, WORLD.groundY - 78);
@@ -1926,15 +1927,14 @@ function houseScene() {
     spawnEnemy('mother',  400, 'hostile', 'mother-house');
     spawnPickup('syringe', k.width() - 80, WORLD.groundY - 8, 'syringe-house');
 
-    // Down grabs whatever pickup is under foot (no door logic in here — the
-    // exit trigger uses onCollide instead).
+    // Down: grab a pickup under foot, otherwise leave through the door if
+    // BAM is standing in front of it.
     k.onKeyPress(['down', 's'], () => {
         const item = nearestInteractable(44, 72);
-        if (item) consumePickup(item);
+        if (item) { consumePickup(item); return; }
+        const dx = Math.abs(EXIT_DOOR_X - (p.pos.x + 16));
+        if (dx < 40) k.go('game', { from: 'house' });
     });
-
-    // Walking into the exit trigger drops the player back on the porch.
-    p.onCollide('exit', () => k.go('game', { from: 'house' }));
 }
 
 // ===========================================================================

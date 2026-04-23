@@ -39,7 +39,7 @@ Default host/port is `127.0.0.1:8000`. Override with `BAM_HOST` / `BAM_PORT` env
 ### The house
 
 Midway through the level a house blocks the road. It's not part of the peaceful path — smash the front door with `X` and then press `↓` to step inside. The interior is a separate scene with the family and a
-syringe on the cabinet; walk out through the exit door on the left to return to the porch. Health, ammo, collected pickups and killed enemies
+syringe on the cabinet; stand in front of the exit door on the left and press `↓` to return to the porch. Health, ammo, collected pickups and killed enemies
 all persist across the trip.
 
 ### The arena (debug mode)

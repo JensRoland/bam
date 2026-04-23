@@ -99,3 +99,14 @@ def render(name: str, score: str, ending: str, years: int) -> bytes:
     buf = io.BytesIO()
     im.save(buf, format="PNG", optimize=True)
     return buf.getvalue()
+
+
+@lru_cache(maxsize=1)
+def render_default() -> bytes:
+    """Plain win-base image as PNG, no overlay. For bare-URL OG previews
+    (Facebook etc. don't reliably render WebP in og:image)."""
+    base_path = pick_base("win", 0)
+    im = Image.open(base_path).convert("RGB")
+    buf = io.BytesIO()
+    im.save(buf, format="PNG", optimize=True)
+    return buf.getvalue()

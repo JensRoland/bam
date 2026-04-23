@@ -22,9 +22,10 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 FRONTEND_DIR = ROOT / "frontend"
 DB_PATH = Path(os.environ.get("BAM_DB", ROOT / "backend" / "data" / "scores.db"))
 
-# When the app is served from a subpath (e.g. app.is/bam) Passenger strips the
-# prefix before Flask sees the request, so the backend needs to know it
-# explicitly. Used to build asset URLs, share links, and OG meta tags.
+# When the app is served from a subpath (e.g. app.is/bam) we need to inject
+# the prefix into asset URLs in the templated HTML (CSS/JS hrefs etc.).
+# Note: Passenger forwards the prefix as SCRIPT_NAME, so request.url_root
+# *already* includes it — don't append URL_PREFIX to that.
 URL_PREFIX = os.environ.get("BAM_URL_PREFIX", "").rstrip("/")
 
 NAME_RE = re.compile(r"^[A-Za-z0-9 _\-\.!?']{1,16}$")
@@ -34,7 +35,7 @@ DEFAULT_DESC = (
     "8-bit sidescroller. Pickup truck broke down in a strange town. "
     "Lock and load, soldier. Hoo-rah!"
 )
-DEFAULT_OG_IMAGE_PATH = "/og-base-win.webp"
+DEFAULT_OG_IMAGE_PATH = "/og-default"
 
 
 def _clean_name(name: str) -> str:
@@ -55,7 +56,7 @@ def _render_index(
 ) -> str:
     """Template frontend/index.html, injecting social-preview meta tags."""
     tpl = (FRONTEND_DIR / "index.html").read_text(encoding="utf-8")
-    site_root = base_url.rstrip("/") + URL_PREFIX + "/"
+    site_root = base_url if base_url.endswith("/") else base_url + "/"
 
     if score and name:
         clean_name = _clean_name(name)
@@ -144,6 +145,14 @@ def create_app() -> Flask:
             years=payload.years,
         )
         return jsonify({"score": score.to_dict()})
+
+    @app.get("/og-default")
+    def og_default():
+        return Response(
+            og.render_default(),
+            mimetype="image/png",
+            headers={"Cache-Control": "public, max-age=86400, immutable"},
+        )
 
     @app.get("/og")
     def og_image():

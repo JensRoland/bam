@@ -14,6 +14,7 @@
  */
 
 const SITE_ORIGIN = window.location.origin;
+const SITE_PREFIX = window.BAM_PREFIX || '';
 
 /** Format ms → "m:ss" for win-ending time shares. */
 function fmtMs(ms) {
@@ -41,7 +42,7 @@ function scoreNumber(score) {
 
 /** @param {ScoreLike} score */
 export function buildShareURL(score) {
-    const u = new URL(SITE_ORIGIN + '/');
+    const u = new URL(SITE_ORIGIN + SITE_PREFIX + '/');
     u.searchParams.set('s', scoreNumber(score));
     u.searchParams.set('n', score.name);
     u.searchParams.set('t', score.ending);

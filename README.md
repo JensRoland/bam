@@ -124,7 +124,7 @@ curl -s http://127.0.0.1:8000/api/scores/top
 
 ## Deployment notes
 
-- Single process — run with `uvicorn bam_backend.app:app` behind Caddy / Nginx on cheap shared hosting or a tiny EC2 box.
+- Single process — Flask runs natively as WSGI, so it drops straight into cPanel shared hosting via Passenger, or behind gunicorn / Caddy / Nginx on a tiny VPS. See `passenger_wsgi.py` at the repo root for the cPanel entry point, and `requirements.txt` for the pip-installable deps (cPanel doesn't speak `uv`).
 - SQLite is fine for expected load. For higher write volumes, swap `ScoreStore` for a Postgres implementation — that's the only thing that needs to change.
 - The frontend is entirely static and can be pushed to a CDN separately if you ever want to split concerns.
 

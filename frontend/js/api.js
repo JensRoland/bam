@@ -13,7 +13,7 @@
  * @property {number} created_at
  */
 
-const BASE = '/api';
+const BASE = (window.BAM_PREFIX || '') + '/api';
 
 /** @returns {Promise<ScoreRow[]>} */
 export async function fetchTopScores() {

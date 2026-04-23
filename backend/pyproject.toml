@@ -4,8 +4,7 @@ version = "0.1.0"
 description = "Brave America Man scoreboard backend"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.115",
-    "uvicorn[standard]>=0.32",
+    "flask>=3.0",
     "pydantic>=2.9",
 ]
 

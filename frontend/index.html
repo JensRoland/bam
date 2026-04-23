@@ -18,8 +18,9 @@
     <meta name="twitter:title" content="{{og_title}}">
     <meta name="twitter:description" content="{{og_description}}">
     <meta name="twitter:image" content="{{og_image}}">
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="{{prefix}}/css/style.css">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23d32f2f' d='M1 2h14v3H1z'/%3E%3Cpath fill='%23fff' d='M1 5h14v3H1z'/%3E%3Cpath fill='%231e3a8a' d='M1 8h14v3H1z'/%3E%3Cpath fill='%23fff' d='M1 11h14v3H1z'/%3E%3C/svg%3E">
+    <script>window.BAM_PREFIX = "{{prefix}}";</script>
 </head>
 <body>
     <div id="stage">
@@ -61,6 +62,6 @@
     <footer>
         <span>B.A.M. — an 8-bit parable. All characters fictional.</span>
     </footer>
-    <script type="module" src="/js/main.js"></script>
+    <script type="module" src="{{prefix}}/js/main.js"></script>
 </body>
 </html>

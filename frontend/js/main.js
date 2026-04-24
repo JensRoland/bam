@@ -10,8 +10,10 @@
 
 import kaplay from 'https://unpkg.com/kaplay@3001.0.19/dist/kaplay.mjs';
 import { registerScenes, setCalmMode, bootstrapEndingTest } from './scenes.js';
+import { initTouchControls, initFullscreen } from './mobile.js';
 
 const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('game'));
+const stage = /** @type {HTMLElement} */ (document.getElementById('stage'));
 const loading = document.getElementById('loading');
 
 // Internal resolution 512x288 gives exactly 2x scale to the 1024x576 canvas,
@@ -32,6 +34,11 @@ const k = kaplay({
 
 try {
     registerScenes(k);
+    // Mobile: on-screen controls dispatch synthetic KeyboardEvents on the
+    // canvas so no scene code has to branch on input source. The fullscreen
+    // toggle is shown on any browser that supports the Fullscreen API.
+    initTouchControls(canvas);
+    initFullscreen(stage);
     // `?debug` (e.g. open http://127.0.0.1:8000/?debug) skips splash and drops
     // straight into a debugging arena: infinite health, all weapons with 500
     // ammo each, random enemies streaming in from the right.

@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>{{og_title}}</title>
     <meta name="description" content="{{og_description}}">
     <!-- Open Graph -->
@@ -26,6 +29,20 @@
     <div id="stage">
         <canvas id="game"></canvas>
         <div id="loading">LOADING…</div>
+        <div id="touch-controls" aria-hidden="true">
+            <button id="tc-left"  class="tc-btn tc-dir" type="button" data-key="a"                     aria-label="Move left">◀</button>
+            <button id="tc-right" class="tc-btn tc-dir" type="button" data-key="d"                     aria-label="Move right">▶</button>
+            <button id="tc-down"  class="tc-btn tc-dir" type="button" data-key="s"                     aria-label="Grab or interact">▼</button>
+            <button id="tc-jump"  class="tc-btn tc-act" type="button" data-key="w"                     aria-label="Jump">▲</button>
+            <button id="tc-fire"  class="tc-btn tc-act tc-fire" type="button" data-key="x" data-alt-key="space" aria-label="Use weapon / confirm">✕</button>
+            <button id="tc-swap"  class="tc-btn tc-act" type="button" data-key="z" data-alt-key="enter" aria-label="Cycle weapon">⇄</button>
+        </div>
+        <button id="tc-fullscreen" class="tc-chrome" type="button" aria-label="Toggle fullscreen">⛶</button>
+        <div id="rotate-prompt" aria-hidden="true">
+            <div>ROTATE DEVICE</div>
+            <div class="rotate-icon">⟳</div>
+            <div class="rotate-sub">B.A.M. plays in landscape</div>
+        </div>
         <div id="submit-overlay" aria-hidden="true">
             <form class="card" id="submit-form">
                 <h2 id="submit-title">ENTER NAME</h2>

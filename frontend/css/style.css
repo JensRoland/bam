@@ -235,3 +235,171 @@ footer {
     border: 2px solid var(--panel-border);
     color: var(--ink);
 }
+
+/* ======================================================================
+ * TOUCH CONTROLS + MOBILE LAYOUT
+ * JS adds `.touch` to <body> on touch-capable devices. Controls are hidden
+ * until then so desktop stays clean.
+ * ====================================================================== */
+
+#touch-controls,
+#tc-fullscreen,
+#rotate-prompt {
+    display: none;
+}
+
+#touch-controls {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    /* Respect iOS safe areas so buttons aren't hidden under the notch/chin. */
+    padding: max(env(safe-area-inset-top), 6px)
+             max(env(safe-area-inset-right), 6px)
+             max(env(safe-area-inset-bottom), 6px)
+             max(env(safe-area-inset-left), 6px);
+}
+
+.tc-btn {
+    position: absolute;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-size: 20px;
+    font-weight: bold;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+    border: 2px solid rgba(255, 255, 255, 0.22);
+    border-radius: 50%;
+    padding: 0;
+    width: 56px;
+    height: 56px;
+    cursor: pointer;
+    opacity: 0.45;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: none;
+    transition: transform .06s ease, background .06s ease, opacity .06s ease;
+}
+
+.tc-btn.pressed,
+.tc-btn:active {
+    transform: scale(0.92);
+    background: rgba(211, 47, 47, 0.55);
+    opacity: 0.95;
+}
+
+/* Left-hand thumb cluster: movement + down/interact */
+#tc-left  { left:  10px; bottom: 10px; }
+#tc-right { left:  72px; bottom: 10px; }
+#tc-down  { left:  40px; bottom: 72px; width: 46px; height: 46px; font-size: 16px; opacity: 0.35; }
+
+/* Right-hand thumb cluster: jump + fire + swap */
+#tc-jump  { right: 10px; bottom: 10px; width: 66px; height: 66px; font-size: 24px; }
+#tc-fire  { right: 82px; bottom: 10px; width: 66px; height: 66px; font-size: 26px;
+            background: rgba(211, 47, 47, 0.20); border-color: rgba(211, 47, 47, 0.55); opacity: 0.6; }
+#tc-swap  { right: 10px; bottom: 82px; width: 46px; height: 46px; font-size: 16px; opacity: 0.35; }
+
+/* Fullscreen toggle — top-right corner chrome */
+#tc-fullscreen {
+    position: absolute;
+    top: max(env(safe-area-inset-top), 6px);
+    right: max(env(safe-area-inset-right), 6px);
+    z-index: 6;
+    width: 34px;
+    height: 34px;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-size: 16px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.55;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity .1s ease;
+}
+#tc-fullscreen:hover { opacity: 1; }
+
+body.touch #touch-controls { display: block; }
+body.has-fullscreen #tc-fullscreen { display: flex; }
+
+/* ---- Touch-device mobile layout: stage fills the viewport ---- */
+@media (hover: none) and (pointer: coarse) {
+    html, body {
+        height: 100dvh;
+        min-height: 0;
+        overflow: hidden;
+    }
+    body {
+        padding: 0;
+        gap: 0;
+    }
+    #stage {
+        width: 100vw;
+        max-width: none;
+        height: 100dvh;
+        aspect-ratio: auto;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    footer { display: none; }
+}
+
+/* When the stage is fullscreened on desktop too, let it fill the screen. */
+#stage:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    aspect-ratio: auto;
+    border: none;
+    border-radius: 0;
+}
+#stage:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    aspect-ratio: auto;
+    border: none;
+    border-radius: 0;
+}
+
+/* Portrait rotate prompt — shown only on touch devices held in portrait. */
+#rotate-prompt {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #000;
+    color: #fff;
+    font-size: 22px;
+    letter-spacing: 4px;
+    text-align: center;
+    padding: 24px;
+}
+#rotate-prompt .rotate-icon {
+    font-size: 64px;
+    animation: rotate-hint 2s ease-in-out infinite;
+}
+#rotate-prompt .rotate-sub {
+    font-size: 12px;
+    letter-spacing: 2px;
+    opacity: 0.6;
+}
+@keyframes rotate-hint {
+    0%, 100% { transform: rotate(0deg); }
+    50%      { transform: rotate(90deg); }
+}
+@media (hover: none) and (pointer: coarse) and (orientation: portrait) {
+    body.touch #rotate-prompt { display: flex; }
+}

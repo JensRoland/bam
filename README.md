@@ -37,6 +37,16 @@ Default host/port is `127.0.0.1:8000`. Override with `BAM_HOST` / `BAM_PORT` env
 | `Tab` (splash)      | Scoreboard                 |
 | `Esc`               | Back to splash             |
 
+### Mobile / touch
+
+Touch-capable devices get on-screen controls automatically — six buttons
+(left / right / jump / down / fire / swap) overlaid at the screen corners,
+plus a fullscreen toggle. Each button dispatches the same keyboard event
+the desktop binding listens for (`frontend/js/mobile.js`), so no scene
+code branches on input source. Fire doubles as menu-confirm (maps to
+`space`) and Swap as `enter`, so the full splash → game → death flow works
+thumbs-only. In portrait a "ROTATE DEVICE" overlay prompts landscape.
+
 ### The house
 
 Midway through the level a house blocks the road. It's not part of the peaceful path — smash the front door with `X` and then press `↓` to step inside. The interior is a separate scene with the family and a
@@ -70,6 +80,7 @@ frontend/                static assets, no build step
     scenes.js            splash / game / death / ending / scoreboard
     sprites.js           hand-painted pixel-art sprite factory
     api.js               scoreboard fetch/submit wrapper
+    mobile.js            touch-controls overlay + fullscreen toggle
 ```
 
 ### Sprites
@@ -107,7 +118,6 @@ curl -s http://127.0.0.1:8000/api/scores/top
 
 - Music + SFX. KAPLAY supports `loadSound` / `play`; a chiptune loop and
   shot/hit/pickup cues would pull weight.
-- Mobile / touch controls (on-screen D-pad + action buttons).
 
 ## License / distribution
 
